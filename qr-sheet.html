@@ -33,8 +33,12 @@
     .scn__name { display: flex; align-items: center; gap: var(--spacing-2); font-size: var(--text-sm); font-weight: var(--font-semibold); }
     .scn__num { display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-5); height: var(--spacing-5); border-radius: var(--radius-full); background: var(--foreground); color: var(--background); font-size: var(--text-2xs); font-weight: var(--font-semibold); }
     .scn p { margin: var(--spacing-1) 0 0; font-size: var(--text-xs); color: var(--ink-2); line-height: 1.5; }
-    .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--spacing-3); }
+    /* Stickers get generous white space and no box: neighbours in the camera
+       frame only slow the reader down (user, 2026-09-10). */
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-12) var(--spacing-10); }
+    .a4--stickers { margin-top: var(--spacing-10); padding-top: var(--spacing-6); border-top: 1px dashed var(--border); }
     .qr { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-1); padding: var(--spacing-2); border: 1px solid var(--border); border-radius: var(--radius-md); break-inside: avoid; }
+    .qr.qr--dev { border: none; padding: var(--spacing-2); }   /* stickers: no box — pure white around the code */
     .qr__img { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
     .qr__img svg { width: 100%; height: 100%; }
     .qr--big .qr__img { max-width: 52mm; }
@@ -57,8 +61,13 @@
       .qr--big .qr__label { font-size: 9pt; }
       .qr__note, .scn p { font-size: 7.5pt; line-height: 1.35; }
       .scn__name { font-size: 9pt; }
-      .grid { gap: 2.5mm; }
+      /* page 2: 5 × 5 over the full sheet — 24mm codes with ≥14mm of white
+         between them sideways and ~27mm between rows */
+      .a4--stickers { break-before: page; margin-top: 0; padding-top: 10mm; border-top: none; }
+      .grid { grid-template-columns: repeat(4, 1fr); gap: 0 6mm; grid-auto-rows: 52mm; align-items: center; justify-items: center; }
+      .qr--dev { width: 34mm; }
       .qr { padding: 1.5mm; gap: 0.5mm; }
+      .qr--dev { padding: 2mm; }
       .qr--dev .qr__img { max-width: 24mm; }
       .qr--dev .qr__label { font-size: 7pt; }
     }
@@ -95,21 +104,40 @@
             ierīces tiek pievienotas vienlaikus. Kit kods: <span class="qr__code">xw45-34df-343s-1234</span>.</p></div>
         <div class="scn"><div class="scn__name"><span class="scn__num">2</span>Skenēt QR kodus</div>
           <p>Scenārijs ierīcēm, kurām nav kopēja Kit QR koda. Katras ierīces QR kods tiek skenēts atsevišķi, un aplikācija
-            automātiski uzskaita noskenētās ierīces. Ierīču kodi — uzlīmes zemāk.</p></div>
+            automātiski uzskaita noskenētās ierīces. Ierīču kodi — uzlīmes zemāk. Uzlīmju QR kodi nav gala kodi — tie ietver tikai konceptuālo jēgu (testa aizstājēji, ne īsto ierīču kodi).</p></div>
         <div class="scn"><div class="scn__name"><span class="scn__num">3</span>Augšupielādēt .csv failu</div>
           <p>Scenārijs ar iepriekš sagatavotu ierīču sarakstu. Vispirms .csv fails tiek saglabāts telefonā (saite sākumlapā)
             un pēc tam augšupielādēts aplikācijā.</p></div>
       </div>
     </div>
 
-    <div class="a4__sub">Ierīču uzlīmes — 2. scenārijs. Skenē tās aplikācijā vienu pēc otras (MIOTY-0001 … 0025).</div>
+    <div class="a4__sub">Ierīču uzlīmes — 2. un 3. lapa (2. scenārijs). Testa kodi, ne gala.</div>
+  </div>
+
+  <!-- Page 2: the 25 stickers alone, spread over the whole sheet so that the
+       camera frame holds one code with nothing next to it (user, 2026-09-10:
+       „atrodas tie QR kodi vēl joprojām par tuvu"). -->
+  <div class="a4 a4--stickers">
+    <div class="a4__head">
+      <div class="a4__title">Ierīču uzlīmes 1–20 — 2. scenārijs</div>
+      <div class="a4__sub">Skenē aplikācijā vienu pēc otras. Testa kodi, ne gala.</div>
+    </div>
     <div class="grid" id="devices"></div>
   </div>
+  <div class="a4 a4--stickers">
+    <div class="a4__head">
+      <div class="a4__title">Ierīču uzlīmes 21–25 — 2. scenārijs</div>
+      <div class="a4__sub">Skenē aplikācijā vienu pēc otras. Testa kodi, ne gala.</div>
+    </div>
+    <div class="grid" id="devices2"></div>
+  </div>
   <script>
-    document.getElementById('devices').innerHTML = Array.from({ length: 25 }, (_, i) => {
-      const id = 'MIOTY-' + String(i + 1).padStart(4, '0');
-      return `<div class="qr qr--dev"><div class="qr__img" data-qr="device" data-id="${id}"></div><div class="qr__label">${id}</div></div>`;
-    }).join('');
+    /* One sticker per cell, the cell about twice the code in both directions
+       (user, 2026-09-10: „lai QR kods būtu 2x2") — 4 × 5 per page, 20 + 5. */
+    const sticker = (i) => { const id = 'MIOTY-' + String(i + 1).padStart(4, '0');
+      return `<div class="qr qr--dev"><div class="qr__img" data-qr="device" data-id="${id}"></div><div class="qr__label">${id}</div></div>`; };
+    document.getElementById('devices').innerHTML = Array.from({ length: 20 }, (_, i) => sticker(i)).join('');
+    document.getElementById('devices2').innerHTML = Array.from({ length: 5 }, (_, i) => sticker(20 + i)).join('');
 
     /* Every code is a URL into the app, so the phone's own camera app can read
        it as well as the scanner inside the app. Same targets as tools/make-qr.py. */
@@ -125,7 +153,8 @@
       document.getElementById('startUrl').textContent = base + '/';
       const target = (el) => ({
         start: `${base}/`,
-        device: `${base}/app/scan.html?d=${el.dataset.id}`,
+        /* short form → smaller QR, faster read (guard: the start code has no id) */
+        device: el.dataset.id ? `${base}/s/?${parseInt(el.dataset.id.slice(6), 10)}` : '',
       })[el.dataset.qr];
       document.querySelectorAll('[data-qr]').forEach((el) => {
         const q = qrcode(0, 'M'); q.addData(target(el)); q.make();

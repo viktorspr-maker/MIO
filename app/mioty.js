@@ -7,7 +7,7 @@
    of 22 devices going into „Workspace #1". */
 (function () {
   const KEY = 'mioty:state';
-  const DEFAULT = { workspace: 'Workspace #1', devices: 0, method: null };
+  const DEFAULT = { workspace: 'Workspace #1', devices: 0, method: null, loggedIn: false, email: '' };
   const WORKSPACES = ['Workspace #1', 'Vēja iela 23', 'Greenhouse North'];
   const KIT = { code: 'xw45-34df-343s-1234', devices: 22 };
   const CSV = { name: 'Mioty_super-list.csv', devices: 22 };
@@ -19,10 +19,18 @@
 
   /* Enable the CTA once every field has a value. `fill` = demo autofill on
      first focus, standing in for the phone's password manager. */
-  function formGate(formId, btnId, next, fill) {
+  function formGate(formId, btnId, next, fill, signIn) {
     const form = $(formId), btn = $(btnId);
     const inputs = Array.from(form.querySelectorAll('input'));
     const sync = () => { btn.disabled = !inputs.every((i) => i.value.trim()); };
+    /* Signing in is remembered: the next run still starts on Hello Mioty, but
+       „Start" skips „Who are you?" and the login form and lands on Choose
+       workspace (user, 2026-09-10: „vienreiz ielogojoties vairs otroreizi
+       logoties neprasa"). Sign out lives on the workspace screen. */
+    const pass = () => {
+      if (signIn) { const e = inputs.find((i) => i.name === 'email'); save({ loggedIn: true, email: (e && e.value.trim()) || '' }); }
+      go(next);
+    };
     inputs.forEach((i) => {
       i.addEventListener('input', sync);
       if (fill) {
@@ -38,16 +46,28 @@
         i.addEventListener('pointerdown', autofill, { once: true });
       }
     });
-    form.addEventListener('submit', (e) => { e.preventDefault(); if (!btn.disabled) go(next); });
-    btn.addEventListener('click', () => go(next));
+    form.addEventListener('submit', (e) => { e.preventDefault(); if (!btn.disabled) pass(); });
+    btn.addEventListener('click', pass);
     sync();
   }
+
+  /* Where „Start" leads: straight to the workspace once signed in. */
+  function startHref() { return load().loggedIn ? 'workspace.html' : 'who.html'; }
+  /* On the sign-in screens: already signed in → nothing to ask, go on. */
+  function gate() { if (load().loggedIn) { window.location.replace('workspace.html'); return true; } return false; }
+  function signOut() { save({ loggedIn: false, email: '' }); go('who.html'); }
 
   /* Choose workspace — the card opens an inline list; the link does the same
      (Figma shows both as ways to change). Trigger reports aria-expanded. */
   function workspacePicker() {
     const s = load(); const name = $('wsName'), btn = $('wsBtn'), list = $('wsList'), link = $('wsChange');
     name.textContent = s.workspace;
+    /* Who is signed in, and the way out of it — the only place to sign out. */
+    const who = $('signedIn');
+    if (who) {
+      who.innerHTML = `Signed in as <strong>${(s.email || window.Mioty.user.email).replace(/</g, '&lt;')}</strong> · <a href="#" id="signOut">Not you? Sign out</a>`;
+      who.querySelector('#signOut').addEventListener('click', (e) => { e.preventDefault(); signOut(); });
+    }
     const render = () => {
       list.innerHTML = WORKSPACES.map((w) => `<button class="opt" type="button" role="option" aria-checked="${w === load().workspace}" data-ws="${w}"><span class="opt__text"><span class="opt__value">${w}</span></span></button>`).join('');
     };
@@ -101,11 +121,29 @@
   const SCAN_KEY = 'mioty:scanned';
   const readScanned = () => { try { return JSON.parse(localStorage.getItem(SCAN_KEY) || '[]'); } catch (_) { return []; } };
   const writeScanned = (arr) => { try { localStorage.setItem(SCAN_KEY, JSON.stringify(arr)); } catch (_) {} };
+  /* What a scanned QR (or a typed string) means. Accepts every form a device
+     code has ever been printed in — bare `MIOTY-0007`, the long
+     `…/app/scan.html?d=MIOTY-0007`, the short `…/s/?7` — so stickers from an
+     older sheet keep working. */
   const codeFrom = (text) => {
     if (!text) return null;
-    const direct = text.trim().match(/^MIOTY-\d{4}$/i); if (direct) return direct[0].toUpperCase();
-    try { const d = new URL(text, location.href).searchParams.get('d'); if (d && /^MIOTY-\d{4}$/i.test(d)) return d.toUpperCase(); } catch (_) {}
+    const bare = String(text).match(/MIOTY-(\d{1,4})\b/i);
+    if (bare) return 'MIOTY-' + bare[1].padStart(4, '0');
+    try {
+      const u = new URL(String(text).trim(), location.href);
+      const d = u.searchParams.get('d'); if (d && /^MIOTY-\d{1,4}$/i.test(d)) return d.toUpperCase();
+      const n = /\/s\/?$/.test(u.pathname) ? parseInt(u.search.replace(/^\?/, ''), 10) : NaN;
+      if (n >= 1 && n <= 9999) return 'MIOTY-' + String(n).padStart(4, '0');
+    } catch (_) {}
     return null;
+  };
+  /* Plain-language reason when a QR is real but not a device sticker. */
+  const whatIsIt = (text) => {
+    const t = String(text || '');
+    if (/\/kit\.html\?code=/i.test(t)) return 'That is the kit code — use “I have a KIT” instead.';
+    if (/\.csv(\?|$)/i.test(t)) return 'That is the .csv link — use “Upload .csv file” instead.';
+    if (/^https?:\/\/[^/]+\/[^?#]*\/?$/i.test(t) && !/\/app\//i.test(t)) return 'That is the start-page code — scan a device sticker (page 2 of the sheet).';
+    return 'Not a device code: ' + (t.length > 40 ? t.slice(0, 40) + '…' : t);
   };
   function scanner() {
     let found = readScanned(); let fake = 0;
@@ -113,15 +151,32 @@
     const cam = document.querySelector('.cam');
     let chips = document.querySelector('.cam__found');
     if (!chips) { chips = document.createElement('div'); chips.className = 'cam__found'; status.before(chips); }
+    const SHOW = 8;
     const sync = () => {
       const n = found.length;
       btn.disabled = n === 0; undo.disabled = n === 0;
       btn.textContent = n ? `Add (${n}) Mioty device${n === 1 ? '' : 's'}` : 'Add';
-      chips.innerHTML = found.slice(-6).map((c) => `<span class="cam__chip">${c}</span>`).join('') + (n > 6 ? `<span class="cam__chip">+${n - 6}</span>` : '');
+      chips.innerHTML = (n > SHOW ? `<span class="cam__chip cam__chip--more">+${n - SHOW}</span>` : '')
+        + found.slice(-SHOW).map((c) => `<span class="cam__chip" data-code="${c}">${c}</span>`).join('');
       writeScanned(found);
     };
+    /* Already scanned: say so, and make THAT chip blink (user, 2026-09-10:
+       „varētu iemirgoties jau noskenētais kods"). If the chip has scrolled out
+       of the last eight, a temporary one blinks in its place. */
+    const flashChip = (code) => {
+      let chip = chips.querySelector(`[data-code="${code}"]`);
+      let temp = false;
+      if (!chip) { chip = document.createElement('span'); chip.className = 'cam__chip'; chip.textContent = code; chips.appendChild(chip); temp = true; }
+      chip.classList.remove('cam__chip--flash'); void chip.offsetWidth;   /* restart the animation */
+      chip.classList.add('cam__chip--flash');
+      setTimeout(() => { chip.classList.remove('cam__chip--flash'); if (temp) chip.remove(); }, 1800);
+    };
     const add = (code) => {
-      if (found.includes(code)) { status.textContent = `${code} already scanned.`; return; }
+      if (found.includes(code)) {
+        status.textContent = `${code} already scanned.`; flashChip(code);
+        if (navigator.vibrate) navigator.vibrate([30, 60, 30]);
+        return;
+      }
       found.push(code); status.textContent = `${code} read.`; sync();
     };
     /* way 2 — arrived here from the phone's camera app */
@@ -129,7 +184,7 @@
     /* way 3 — fake */
     frame.addEventListener('click', () => { fake += 1; add(`MIOTY-${String(9000 + fake).padStart(4, '0')}`); });
     undo.addEventListener('click', () => { found.pop(); sync(); status.textContent = 'Last one removed.'; });
-    $('enter').addEventListener('click', () => { const c = codeFrom(prompt('Device code (MIOTY-0001 … 0025)') || ''); if (c) add(c); else status.textContent = 'Not a Mioty code.'; });
+    $('enter').addEventListener('click', () => { const t = prompt('Device code (MIOTY-0001 … 0025, or just the number)') || ''; const c = codeFrom(/^\d{1,4}$/.test(t.trim()) ? 'MIOTY-' + t.trim() : t); if (c) add(c); else if (t) status.textContent = whatIsIt(t); });
     btn.addEventListener('click', () => { save({ devices: found.length, method: 'scan' }); writeScanned([]); go('connecting.html'); });
     sync();
     /* way 1 — the phone camera inside the app. Only where it can work:
@@ -147,7 +202,7 @@
       && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname));
     function startCamera() {
       camBtn.hidden = true; status.textContent = 'Starting camera…';
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
         .then((s) => {
           stream = s; video.srcObject = s; video.hidden = false; cam.classList.add('cam--live');
           return video.play();
@@ -172,41 +227,85 @@
     try { if ('BarcodeDetector' in window) detector = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (_) { detector = null; }
     const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d', { willReadFrequently: true });
     let last = '', lastAt = 0, busy = false;
-    function grabCentre() {
+    /* The region of the video that the on-screen frame shows. The <video> is
+       object-fit: cover, so first work out which part of the native frame is
+       visible, then take the frame's share of it. Decoding only that region at
+       native resolution gives the most pixels per module for the least work. */
+    /* The part of the native video frame that the on-screen frame shows (the
+       <video> is object-fit: cover), plus a little slack. Used both to crop
+       what jsQR sees and to reject codes that are merely nearby. */
+    function region(pad) {
       const vw = video.videoWidth, vh = video.videoHeight;
-      const side = Math.round(Math.min(vw, vh) * 0.82);
-      const sx = Math.round((vw - side) / 2), sy = Math.round((vh - side) / 2);
-      const out = Math.min(side, 720);
-      canvas.width = canvas.height = out;
-      ctx.drawImage(video, sx, sy, side, side, 0, 0, out, out);
-      return ctx.getImageData(0, 0, out, out);
+      const ew = video.clientWidth || 1, eh = video.clientHeight || 1;
+      const scale = Math.max(ew / vw, eh / vh);                 /* css px per native px */
+      const visW = ew / scale, visH = eh / scale;
+      const fr = frame.getBoundingClientRect(), er = video.getBoundingClientRect();
+      const fx = (fr.left - er.left) / scale + (vw - visW) / 2, fy = (fr.top - er.top) / scale + (vh - visH) / 2;
+      const fw = fr.width / scale, fh = fr.height / scale, p = fw * (pad || 0);
+      const sx = Math.max(0, fx - p), sy = Math.max(0, fy - p);
+      return { sx, sy, sw: Math.min(vw - sx, fw + 2 * p), sh: Math.min(vh - sy, fh + 2 * p) };
+    }
+    function grabFrame() {
+      const r = region(0.15);
+      const out = Math.min(Math.round(Math.max(r.sw, r.sh)), 560);      /* enough pixels, cheap enough for 30fps on a phone */
+      canvas.width = Math.round(out * r.sw / Math.max(r.sw, r.sh)); canvas.height = Math.round(out * r.sh / Math.max(r.sw, r.sh));
+      ctx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, canvas.width, canvas.height);
+      return ctx.getImageData(0, 0, canvas.width, canvas.height);
+    }
+    /* Only the code the user is aiming at: its centre in the middle 60% of the
+       crop and its size at least 30% of it. Neighbouring stickers at the edge of
+       the picture are ignored instead of being „read by accident". */
+    function aimed(loc, w, h) {
+      if (!loc) return true;
+      const pts = [loc.topLeftCorner, loc.topRightCorner, loc.bottomLeftCorner, loc.bottomRightCorner];
+      const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y);
+      const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+      const size = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+      return cx > w * 0.2 && cx < w * 0.8 && cy > h * 0.2 && cy < h * 0.8 && size >= Math.min(w, h) * 0.3;
+    }
+    function aimedBox(box) {
+      const r = region(0), cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+      return cx > r.sx + r.sw * 0.1 && cx < r.sx + r.sw * 0.9 && cy > r.sy + r.sh * 0.1 && cy < r.sy + r.sh * 0.9
+        && Math.max(box.width, box.height) >= Math.min(r.sw, r.sh) * 0.3;
     }
     function tick() {
       if (!stream) return;
       if (!busy && video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth) {
         if (detector) {
           busy = true;
-          detector.detect(video).then((codes) => { codes.forEach((c) => decode(c.rawValue)); })
+          detector.detect(video).then((codes) => { codes.forEach((c) => { if (!c.boundingBox || aimedBox(c.boundingBox)) decode(c.rawValue); }); })
             .catch(() => { detector = null; })          /* engine broke — fall back to jsQR */
             .finally(() => { busy = false; });
         } else {
-          const img = grabCentre();
+          const img = grabFrame();
           const hit = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
-          if (hit && hit.data) decode(hit.data);
+          if (hit && hit.data && aimed(hit.location, img.width, img.height)) decode(hit.data);
         }
       }
-      setTimeout(() => requestAnimationFrame(tick), detector ? 120 : 60);
+      if (detector) setTimeout(() => requestAnimationFrame(tick), 100); else requestAnimationFrame(tick);
     }
     /* One entry point for whatever the camera read — also what the tests feed. */
     function decode(text) {
       const code = codeFrom(text), now = Date.now();
-      if (!code) { status.textContent = 'That QR is not a Mioty device.'; return false; }
-      if (code === last && now - lastAt < 1500) return false;     /* same sticker still in view */
+      if (!code) { status.textContent = whatIsIt(text); return false; }
+      if (code === last && now - lastAt < 1500) { lastAt = now; return false; }   /* same sticker still in view — quiet */
       last = code; lastAt = now; add(code);
       if (navigator.vibrate) navigator.vibrate(40);
       return true;
     }
     window.Mioty.decode = decode;
+    /* The frame is as big as the screen allows — but never so big that the Add
+       button falls below the fold (short phones with the browser bars showing,
+       the desktop preview frame). Footer height changes (chips appear, the
+       „Turn on camera" button comes and goes) re-fit it. */
+    const foot = document.querySelector('.cam__foot');
+    const fit = () => {
+      const room = cam.clientHeight - (foot ? foot.offsetHeight : 0) - 64;   /* 64 = the view's vertical padding */
+      frame.style.width = Math.max(160, Math.min(288, room)) + 'px';
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    if (window.ResizeObserver && foot) new ResizeObserver(fit).observe(foot);
     camBtn.addEventListener('click', startCamera);
     window.addEventListener('pagehide', () => { if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; });
     if (canScan) startCamera();
@@ -265,5 +364,5 @@
     const s = load(); $('n').textContent = s.devices || KIT.devices; $('ws').textContent = s.workspace;
   }
 
-  window.Mioty = { state: load(), user: { email: 'edgars.sparnins@saftehnika.com' }, formGate, workspacePicker, kitCode, scanner, filePicker, connecting, done };
+  window.Mioty = { state: load(), user: { email: 'edgars.sparnins@saftehnika.com' }, formGate, workspacePicker, kitCode, scanner, filePicker, connecting, done, startHref, gate, signOut };
 })();

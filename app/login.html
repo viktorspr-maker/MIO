@@ -50,7 +50,8 @@
 <script src="../js/components.js"></script>
 <script src="mioty.js"></script>
 <script>
+  Mioty.gate();   /* already signed in → straight to Choose workspace */
   AppShell.mount({ app: 'mioty', title: '', back: "who.html", backLabel: 'Back', tabs: [] });
-  Mioty.formGate('form', 'go', 'workspace.html', { email: Mioty.user.email, password: 'correct-horse-battery' });</script>
+  Mioty.formGate('form', 'go', 'workspace.html', { email: Mioty.user.email, password: 'correct-horse-battery' }, true);</script>
 </body>
 </html>

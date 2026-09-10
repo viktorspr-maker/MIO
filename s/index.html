@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<!-- Short target for the device stickers: /s/?7 → app/scan.html?d=MIOTY-0007.
+     A 42-byte URL makes a 29–33-module QR instead of 41, so the same 24mm
+     sticker has ~25% larger modules and the camera reads it faster. -->
+<html lang="en"><head><meta charset="UTF-8" /><title>Mioty</title>
+<script>
+  var n = parseInt(location.search.replace(/^\?/, ''), 10);
+  location.replace(n >= 1 && n <= 9999 ? '../app/scan.html?d=MIOTY-' + String(n).padStart(4, '0') : '../index.html');
+</script></head><body></body></html>

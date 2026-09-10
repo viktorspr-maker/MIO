@@ -29,7 +29,7 @@
               <p class="lead">Your gateway is online. In a few steps it and the Mioty devices from your kit will be registered in Aranet Cloud, in the workspace you choose.</p>
               <div class="onb__grow"></div>
               <div class="onb__foot">
-                <a class="btn btn--primary btn--block" href="who.html">Start</a>
+                <a class="btn btn--primary btn--block" href="who.html" id="start">Start</a>
               </div>
             </div>
           </main>
@@ -44,6 +44,7 @@
 <script src="../js/components.js"></script>
 <script src="mioty.js"></script>
 <script>
+  document.getElementById('start').href = Mioty.startHref();   /* signed in → skips the login */
   AppShell.mount({ app: 'mioty', title: '', back: "../index.html", backLabel: 'Start page', tabs: [] });
 </script>
 </body>
