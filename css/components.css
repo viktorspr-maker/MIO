@@ -1,0 +1,168 @@
+/* App — COMPONENTS + content patterns, shared by every app in this project
+   (Mioty, Aranet Home, Cloud app, JR Crop).
+
+   Wireframe set (user, 2026-09-10): shadcn anatomy, monochrome — black filled
+   CTA, outline secondary, grey inputs, grey circle placeholders. Sizes follow
+   the shadcn defaults table in CLAUDE.md, lifted to the 44px touch floor where
+   a control is tapped with a thumb. Every value is a token; colours rgba only.
+
+   What belongs here: anything an app SCREEN is built from. What does NOT: the
+   shell (style.css) and per-screen one-offs (that screen's own <style>).
+   Apps have no CSS files of their own — one set keeps the four identical. */
+
+/* ── onboarding page skeleton ─────────────────────────────────────────────
+   Figma: grey circle → heading → lead → controls, stacked, with the primary
+   action pushed to the bottom of the screen on tall phones. */
+.onb { display: flex; flex-direction: column; gap: var(--spacing-4); min-height: 100%; }
+.onb__grow { flex: 1; }
+/* width:100% so a centred .onb (align-items:center) still gets a full-width CTA */
+.onb__foot { display: flex; flex-direction: column; gap: var(--spacing-3); width: 100%; padding-top: var(--spacing-4); }
+
+/* Placeholder mark — the grey circle every Figma screen opens with. Stands in
+   for a logo / illustration the wireframe does not yet have. */
+.ph { display: inline-block; width: var(--spacing-12); height: var(--spacing-12); border-radius: var(--radius-full); background: var(--muted); }
+.ph--sm { width: var(--spacing-8); height: var(--spacing-8); }
+
+.h1 { font-size: var(--text-3xl); font-weight: var(--font-bold); line-height: 1.2; letter-spacing: -0.3px; }
+.lead { font-size: var(--text-sm); color: var(--ink-2); line-height: 1.5; }
+.hint { font-size: var(--text-xs); color: var(--muted-foreground); line-height: 1.5; }
+.stack { display: flex; flex-direction: column; gap: var(--spacing-3); }
+.stack--tight { gap: var(--spacing-2); }
+.center { text-align: center; align-items: center; }
+
+/* ── buttons — shadcn Button, mobile size (h-11 = the 44px floor) ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-2);
+  height: var(--spacing-11); padding: 0 var(--spacing-4);
+  border: 1px solid transparent; border-radius: var(--radius-md);
+  font: inherit; font-size: var(--text-sm); font-weight: var(--font-medium); line-height: 1;
+  color: var(--foreground); background: none; text-decoration: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: background-color .12s, border-color .12s;
+}
+.btn svg { width: var(--spacing-4); height: var(--spacing-4); flex: none; }
+.btn--block { display: flex; width: 100%; }
+.btn--primary { background: var(--primary); color: var(--primary-foreground); }
+.btn--primary:hover { background: color-mix(in srgb, var(--primary) 88%, var(--background)); }
+.btn--outline { border-color: var(--input); background: var(--background); }
+.btn--outline:hover { background: var(--secondary); }
+.btn--ghost:hover { background: var(--secondary); }
+.btn--sm { height: var(--spacing-8); padding: 0 var(--spacing-3); font-size: var(--text-xs); }
+/* Icon-only — MUST carry data-tooltip + aria-label (CLAUDE.md). */
+.btn--icon { width: var(--spacing-11); padding: 0; }
+.btn--icon.btn--sm { width: var(--spacing-8); }
+/* Disabled loses its colour, is never just faded (CLAUDE.md, 2026-09-02). */
+.btn:disabled, .btn[aria-disabled="true"] {
+  background: var(--muted); color: var(--muted-foreground); border-color: transparent;
+  opacity: 1; cursor: not-allowed; pointer-events: none;
+}
+
+/* Text link — the one coloured thing in the wireframe besides status. */
+.link { color: var(--status-ok); font-size: var(--text-sm); font-weight: var(--font-medium); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+
+/* ── fields — shadcn Input at the touch height, grey fill, leading icon ── */
+.field { display: flex; flex-direction: column; gap: var(--spacing-1); }
+.field__label { font-size: var(--text-xs); font-weight: var(--font-medium); color: var(--foreground); }
+.input {
+  display: flex; align-items: center; gap: var(--spacing-2);
+  height: var(--spacing-11); padding: 0 var(--spacing-3);
+  border: 1px solid var(--input); border-radius: var(--radius-md); background: var(--muted);
+  color: var(--foreground);
+}
+.input:focus-within { border-color: var(--ring); background: var(--background); }
+.input > svg { width: var(--spacing-4); height: var(--spacing-4); flex: none; color: var(--muted-foreground); }
+.input > input {
+  flex: 1; min-width: 0; height: 100%; border: none; background: none; outline: none;
+  font: inherit; font-size: var(--text-base); color: inherit;
+}
+.input > input::placeholder { color: var(--muted-foreground); }
+.input__trail { display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-8); height: var(--spacing-8); margin-right: calc(var(--spacing-2) * -1); border: none; border-radius: var(--radius-sm); background: none; color: var(--muted-foreground); cursor: pointer; }
+.input__trail svg { width: var(--spacing-4); height: var(--spacing-4); }
+
+/* ── selection card — „Your current workspace is: …" row with a chevron ── */
+.opt {
+  display: flex; align-items: center; gap: var(--spacing-3); width: 100%;
+  min-height: var(--spacing-14); padding: var(--spacing-3);
+  border: 1px solid var(--input); border-radius: var(--radius-md); background: var(--background);
+  color: inherit; text-align: left; text-decoration: none; font: inherit; cursor: pointer;
+}
+.opt:hover { background: var(--secondary); }
+.opt > svg { width: var(--spacing-5); height: var(--spacing-5); flex: none; color: var(--foreground); }
+.opt__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--spacing) * 0.5); }
+.opt__label { font-size: var(--text-xs); color: var(--muted-foreground); }
+.opt__value { font-size: var(--text-sm); font-weight: var(--font-medium); }
+.opt__chev { width: var(--spacing-4); height: var(--spacing-4); color: var(--muted-foreground); flex: none; }
+.opt[aria-checked="true"] { border-color: var(--ring); box-shadow: inset 0 0 0 1px var(--ring); }
+
+/* ── status ring — Figma's teal spinner / ✓ ── */
+.ring {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--spacing-16); height: var(--spacing-16);
+  border: 3px solid var(--status-ok); border-radius: var(--radius-full); color: var(--status-ok);
+}
+.ring svg { width: var(--spacing-8); height: var(--spacing-8); }
+.ring--spin { border-color: var(--status-ok-soft); border-top-color: var(--status-ok); animation: ring-spin 0.9s linear infinite; }
+@keyframes ring-spin { to { transform: rotate(360deg); } }
+
+/* ── summary box — „You will add 22 Mioty devices to workspace: …" ── */
+.summary { padding: var(--spacing-3) var(--spacing-4); border-radius: var(--radius-md); background: var(--secondary); font-size: var(--text-sm); font-weight: var(--font-medium); text-align: center; line-height: 1.45; }
+
+/* ── fake camera — the phone's scanner, stood in for by the prototype ── */
+.cam { position: relative; flex: 1; display: flex; flex-direction: column; background: var(--foreground); color: var(--background); }
+.cam__close { position: absolute; top: var(--spacing-3); left: var(--spacing-3); z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-8); height: var(--spacing-8); border: 1px solid rgba(255, 255, 255, 0.6); border-radius: var(--radius-sm); color: var(--background); background: none; cursor: pointer; }
+.cam__close svg { width: var(--spacing-4); height: var(--spacing-4); }
+.cam__view { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--spacing-8); }
+.cam__frame { position: relative; width: min(100%, calc(var(--spacing) * 60)); aspect-ratio: 1; }
+.cam__frame::before, .cam__frame::after,
+.cam__frame > i::before, .cam__frame > i::after {
+  content: ""; position: absolute; width: var(--spacing-6); height: var(--spacing-6);
+  border: 2px solid var(--background);
+}
+.cam__frame::before { top: 0; left: 0; border-right: none; border-bottom: none; }
+.cam__frame::after { top: 0; right: 0; border-left: none; border-bottom: none; }
+.cam__frame > i::before { bottom: 0; left: 0; border-right: none; border-top: none; }
+.cam__frame > i::after { bottom: 0; right: 0; border-left: none; border-top: none; }
+.cam__qr { position: absolute; inset: var(--spacing-6); background: var(--background); color: var(--foreground); border-radius: var(--radius-sm); padding: var(--spacing-2); }  /* ink on white — .cam inverts colour for everything else */
+.cam__qr svg { width: 100%; height: 100%; }
+.cam__line { position: absolute; left: var(--spacing-2); right: var(--spacing-2); height: 2px; background: rgba(34, 197, 94, 1); box-shadow: 0 0 var(--spacing-2) rgba(34, 197, 94, 0.8); animation: cam-scan 2s ease-in-out infinite alternate; }
+@keyframes cam-scan { from { top: var(--spacing-4); } to { top: calc(100% - var(--spacing-4)); } }
+.cam__foot { display: flex; flex-direction: column; gap: var(--spacing-3); padding: var(--spacing-4) var(--spacing-4) var(--spacing-6); }
+.cam__row { display: flex; gap: var(--spacing-2); }
+.cam .btn--outline { border-color: rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.12); color: var(--background); }
+.cam .btn--primary { background: var(--background); color: var(--foreground); }
+.cam .btn:disabled { background: rgba(255, 255, 255, 0.12); color: rgba(255, 255, 255, 0.45); }
+
+/* ── fake file list — stands in for the OS picker (.csv branch) ── */
+.files { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.file { display: flex; align-items: center; gap: var(--spacing-3); min-height: var(--spacing-14); padding: var(--spacing-2) var(--spacing-3); border: none; border-bottom: 1px solid var(--border); background: var(--background); font: inherit; text-align: left; color: inherit; cursor: pointer; }
+.file:last-child { border-bottom: none; }
+.file:hover { background: var(--secondary); }
+.file[aria-checked="true"] { background: var(--secondary); }
+.file__ico { display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-9); height: var(--spacing-9); border-radius: var(--radius-sm); background: var(--muted); color: var(--muted-foreground); font-size: var(--text-2xs); font-weight: var(--font-semibold); text-transform: uppercase; flex: none; }
+.file__ico--csv { background: var(--status-ok-soft); color: var(--status-ok); }
+.file__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.file__name { font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file__meta { font-size: var(--text-xs); color: var(--muted-foreground); }
+.file__check { width: var(--spacing-5); height: var(--spacing-5); border: 1px solid var(--input); border-radius: var(--radius-full); flex: none; display: inline-flex; align-items: center; justify-content: center; color: var(--background); }
+.file[aria-checked="true"] .file__check { background: var(--status-ok); border-color: var(--status-ok); }
+.file__check svg { width: var(--spacing-3); height: var(--spacing-3); }
+
+/* ── device-count chip ── */
+.count { display: inline-flex; align-items: center; gap: var(--spacing-1); padding: calc(var(--spacing) * 0.5) var(--spacing-2); border-radius: var(--radius-md); background: var(--secondary); font-size: var(--text-xs); font-weight: var(--font-medium); }
+
+/* Tablet: onboarding column stops growing past a phone-ish measure so the
+   black CTA does not stretch across 700px. */
+@container app (min-width: 700px) {
+  /* `.screen > .onb`, not `.onb`: style.css gives every .screen child a 720px
+     measure at the same specificity, and this must beat it. */
+  .screen > .onb { max-width: calc(var(--spacing) * 110); margin-inline: auto; width: 100%; }
+}
+
+/* ── real camera (test app): the video sits under the frame, full bleed ── */
+.cam__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cam__view { position: relative; z-index: 1; }
+.cam--live .cam__qr { display: none; }            /* the fake code hides once the camera runs */
+.cam--live .cam__line { display: none; }
+.cam__status { font-size: var(--text-xs); color: rgba(255, 255, 255, 0.75); text-align: center; line-height: 1.4; min-height: calc(var(--text-xs) * 2.8); }
+.cam__found { display: flex; flex-wrap: wrap; gap: var(--spacing-1); justify-content: center; }
+.cam__chip { padding: calc(var(--spacing) * 0.5) var(--spacing-2); border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.14); font-size: var(--text-2xs); font-variant-numeric: tabular-nums; }

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Who are you? — Mioty</title>
+  <!-- Installable: „Add to Home Screen" opens it full-screen, no browser bar -->
+  <link rel="manifest" href="../manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Mioty test" />
+  <link rel="apple-touch-icon" href="../icon-180.png" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="../lib/tailwind.css" />
+  <link rel="stylesheet" href="../lib/shadcn.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="stage">
+    <div class="device-viewport" id="device">
+      <div class="device-inner">
+        <div class="device-pane">
+          <main class="screen" id="screen">
+
+            <div class="onb">
+              <span class="ph"></span>
+              <h1 class="h1">Who are you?</h1>
+              <p class="lead">Mioty devices are managed in Aranet Cloud. Sign in with your Cloud account, or create one if this is your first Aranet product.</p>
+              <div class="stack">
+                <a class="btn btn--outline btn--block" href="create.html">New</a>
+                <a class="btn btn--outline btn--block" href="login.html">Existing user</a>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="../lib/icons.js"></script>
+<script src="../js/icons.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/components.js"></script>
+<script src="mioty.js"></script>
+<script>
+  AppShell.mount({ app: 'mioty', title: '', back: "index.html", backLabel: 'Back', tabs: [] });
+</script>
+</body>
+</html>

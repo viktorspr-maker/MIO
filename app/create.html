@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Create account — Mioty</title>
+  <!-- Installable: „Add to Home Screen" opens it full-screen, no browser bar -->
+  <link rel="manifest" href="../manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Mioty test" />
+  <link rel="apple-touch-icon" href="../icon-180.png" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="../lib/tailwind.css" />
+  <link rel="stylesheet" href="../lib/shadcn.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="stage">
+    <div class="device-viewport" id="device">
+      <div class="device-inner">
+        <div class="device-pane">
+          <main class="screen" id="screen">
+
+            <div class="onb">
+              <span class="ph"></span>
+              <h1 class="h1">Create account</h1>
+              <form class="stack" id="form" novalidate>
+                <label class="field"><span class="field__label">Name</span>
+                  <span class="input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="text" name="name" placeholder="Your name" autocomplete="name" /></span></label>
+                <label class="field"><span class="field__label">Email</span>
+                  <span class="input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><input type="email" name="email" placeholder="Enter your email" autocomplete="email" /></span></label>
+                <label class="field"><span class="field__label">Password</span>
+                  <span class="input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" name="password" placeholder="Set your password" autocomplete="new-password" /></span></label>
+              </form>
+              <div class="onb__grow"></div>
+              <div class="onb__foot">
+                <button class="btn btn--primary btn--block" id="go" type="button" disabled>Register</button>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="../lib/icons.js"></script>
+<script src="../js/icons.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/components.js"></script>
+<script src="mioty.js"></script>
+<script>
+  AppShell.mount({ app: 'mioty', title: '', back: "who.html", backLabel: 'Back', tabs: [] });
+  Mioty.formGate('form', 'go', 'workspace.html');</script>
+</body>
+</html>

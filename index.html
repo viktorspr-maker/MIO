@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!-- Start page of the Mioty QR test app. Stamps the wireframe mode itself: it
+     runs no AppShell (it is not one of the app's screens). -->
+<html lang="en" data-mode="wireframe">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Mioty onboarding test</title>
+  <!-- Installable: „Add to Home Screen" opens it full-screen, no browser bar -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Mioty test" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="lib/tailwind.css" />
+  <link rel="stylesheet" href="lib/shadcn.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .start { max-width: calc(var(--spacing) * 150); margin-inline: auto; padding: var(--spacing-6) var(--spacing-4) var(--spacing-12); display: flex; flex-direction: column; gap: var(--spacing-5); }
+    .start__title { font-size: var(--text-3xl); font-weight: var(--font-bold); letter-spacing: -0.3px; }
+    .start__lead { font-size: var(--text-sm); color: var(--ink-2); line-height: 1.5; }
+    .sc { display: flex; flex-direction: column; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--card); }
+    .sc__head { display: flex; align-items: center; gap: var(--spacing-3); }
+    .sc__num { display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-8); height: var(--spacing-8); border-radius: var(--radius-full); background: var(--primary); color: var(--primary-foreground); font-size: var(--text-sm); font-weight: var(--font-semibold); flex: none; }
+    .sc__name { font-size: var(--text-lg); font-weight: var(--font-semibold); }
+    .sc__text { font-size: var(--text-sm); color: var(--ink-2); line-height: 1.5; }
+    .sc__steps { margin: 0; padding-left: var(--spacing-5); font-size: var(--text-sm); color: var(--ink-2); line-height: 1.6; }
+    .sc__steps b { color: var(--foreground); font-weight: var(--font-medium); }
+    .sheet { display: flex; gap: var(--spacing-3); align-items: center; padding: var(--spacing-3) var(--spacing-4); border: 1px dashed var(--input); border-radius: var(--radius-lg); font-size: var(--text-sm); color: var(--ink-2); }
+    .sheet a { color: var(--foreground); font-weight: var(--font-medium); }
+    .foot { font-size: var(--text-xs); color: var(--muted-foreground); line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <main class="start">
+    <div>
+      <h1 class="start__title">Mioty onboarding test</h1>
+      <p class="start__lead">Three ways to get a Mioty Gateway and its kit of devices into Aranet Cloud — from the
+        EP.02 journey map. Each one can be walked through on a phone with real QR codes.
+        Wireframe prototype; nothing here is connected to anything.</p>
+    </div>
+
+    <div class="sheet">
+      <span>🖨</span>
+      <span>Print the <a href="qr-sheet.html">QR sheet (A4)</a> first: one gateway code, one kit code, 25 device codes, one .csv link.</span>
+    </div>
+
+    <section class="sc">
+      <div class="sc__head"><span class="sc__num">1</span><span class="sc__name">I have a KIT</span></div>
+      <p class="sc__text">Gateway plus a boxed kit. One code registers every device in the kit at once.</p>
+      <ol class="sc__steps">
+        <li>Scan the <b>Gateway QR</b> with the phone camera → Hello Mioty → Start</li>
+        <li>Existing user → Login → Choose workspace</li>
+        <li><b>I have a KIT</b> → paste or scan the <b>Kit QR</b> → Add</li>
+        <li>Connecting Devices → Successfully connected</li>
+      </ol>
+      <a class="btn btn--primary btn--block" href="app/index.html">Start scenario 1</a>
+    </section>
+
+    <section class="sc">
+      <div class="sc__head"><span class="sc__num">2</span><span class="sc__name">Scan QR codes</span></div>
+      <p class="sc__text">Devices without a kit code. Scan each device sticker in a row; the app counts them.</p>
+      <ol class="sc__steps">
+        <li>Gateway QR → Hello Mioty → Login → Choose workspace</li>
+        <li><b>Scan QR code</b> → camera opens inside the app → hold the <b>device QRs</b> one after another</li>
+        <li>The button counts: <b>Add (n) Mioty devices</b> → tap it</li>
+        <li>Connecting Devices → Successfully connected</li>
+      </ol>
+      <a class="btn btn--primary btn--block" href="app/index.html">Start scenario 2</a>
+    </section>
+
+    <section class="sc">
+      <div class="sc__head"><span class="sc__num">3</span><span class="sc__name">Upload .csv file</span></div>
+      <p class="sc__text">A prepared device list. Save it to the phone, then pick it from the app.</p>
+      <ol class="sc__steps">
+        <li>Scan the <b>.csv QR</b> with the phone camera → the file downloads to the phone</li>
+        <li>Gateway QR → Hello Mioty → Login → Choose workspace</li>
+        <li><b>Upload .csv file</b> → Choose a .csv from this phone → Add</li>
+        <li>Connecting Devices → Successfully connected</li>
+      </ol>
+      <a class="btn btn--primary btn--block" href="app/index.html">Start scenario 3</a>
+    </section>
+
+    <p class="foot">Every scenario ends on “Successfully connected” with a button back to this page. On a laptop the
+      app shows inside a phone frame and the camera is faked (tap the frame). On a phone, open this page over HTTPS
+      for the real camera.</p>
+  </main>
+</body>
+</html>
