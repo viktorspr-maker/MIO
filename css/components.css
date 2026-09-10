@@ -3,7 +3,7 @@
 
    Wireframe set (user, 2026-09-10): shadcn anatomy, monochrome — black filled
    CTA, outline secondary, grey inputs, grey circle placeholders. Sizes follow
-   the shadcn defaults table in CLAUDE.md, lifted to the 44px touch floor where
+   the shadcn defaults, lifted to the 44px touch floor where
    a control is tapped with a thumb. Every value is a token; colours rgba only.
 
    What belongs here: anything an app SCREEN is built from. What does NOT: the
@@ -47,10 +47,10 @@
 .btn--outline:hover { background: var(--secondary); }
 .btn--ghost:hover { background: var(--secondary); }
 .btn--sm { height: var(--spacing-8); padding: 0 var(--spacing-3); font-size: var(--text-xs); }
-/* Icon-only — MUST carry data-tooltip + aria-label (CLAUDE.md). */
+/* Icon-only — MUST carry data-tooltip + aria-label. */
 .btn--icon { width: var(--spacing-11); padding: 0; }
 .btn--icon.btn--sm { width: var(--spacing-8); }
-/* Disabled loses its colour, is never just faded (CLAUDE.md, 2026-09-02). */
+/* Disabled loses its colour, is never just faded. */
 .btn:disabled, .btn[aria-disabled="true"] {
   background: var(--muted); color: var(--muted-foreground); border-color: transparent;
   opacity: 1; cursor: not-allowed; pointer-events: none;
@@ -109,9 +109,12 @@
 
 /* ── fake camera — the phone's scanner, stood in for by the prototype ── */
 .cam { position: relative; flex: 1; display: flex; flex-direction: column; background: var(--foreground); color: var(--background); }
-.cam__close { position: absolute; top: var(--spacing-3); left: var(--spacing-3); z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-8); height: var(--spacing-8); border: 1px solid rgba(255, 255, 255, 0.6); border-radius: var(--radius-sm); color: var(--background); background: none; cursor: pointer; }
+.cam__close { position: absolute; top: var(--spacing-3); left: var(--spacing-3); z-index: 3; display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-8); height: var(--spacing-8); border: 1px solid rgba(255, 255, 255, 0.6); border-radius: var(--radius-sm); color: var(--background); background: none; cursor: pointer; }
 .cam__close svg { width: var(--spacing-4); height: var(--spacing-4); }
-.cam__view { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--spacing-8); }
+/* pointer-events: none — the view spans the whole camera area, including the ✕
+   corner; only the frame itself takes taps. */
+.cam__view { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--spacing-8); pointer-events: none; }
+.cam__frame { pointer-events: auto; }
 .cam__frame { position: relative; width: min(100%, calc(var(--spacing) * 60)); aspect-ratio: 1; }
 .cam__frame::before, .cam__frame::after,
 .cam__frame > i::before, .cam__frame > i::after {
@@ -161,8 +164,18 @@
 /* ── real camera (test app): the video sits under the frame, full bleed ── */
 .cam__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .cam__view { position: relative; z-index: 1; }
+.cam__foot { position: relative; z-index: 2; }
 .cam--live .cam__qr { display: none; }            /* the fake code hides once the camera runs */
 .cam--live .cam__line { display: none; }
 .cam__status { font-size: var(--text-xs); color: rgba(255, 255, 255, 0.75); text-align: center; line-height: 1.4; min-height: calc(var(--text-xs) * 2.8); }
 .cam__found { display: flex; flex-wrap: wrap; gap: var(--spacing-1); justify-content: center; }
 .cam__chip { padding: calc(var(--spacing) * 0.5) var(--spacing-2); border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.14); font-size: var(--text-2xs); font-variant-numeric: tabular-nums; }
+
+/* ── ghosted code field — the expected code shows grey behind the caret and the
+      typed characters cover it one by one (kit code). Monospace so the ghost and
+      the typed text line up exactly. ── */
+.input--ghost { position: relative; }
+.input--ghost > input { position: relative; z-index: 1; background: none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.02em; }
+.input--ghost > input::placeholder { color: transparent; }
+.input__ghost { position: absolute; left: calc(var(--spacing-3) + var(--spacing-4) + var(--spacing-2)); top: 0; height: 100%; display: flex; align-items: center; pointer-events: none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--text-base); letter-spacing: 0.02em; color: var(--muted-foreground); white-space: pre; }
+.input__ghost i { font-style: normal; visibility: hidden; }   /* the part already typed */

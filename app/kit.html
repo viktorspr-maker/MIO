@@ -27,7 +27,8 @@
               <span class="ph"></span>
               <h1 class="h1">I have a KIT</h1>
               <label class="field"><span class="field__label">Kit code</span>
-                <span class="input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg><input type="text" id="code" placeholder="Enter or paste code" autocomplete="off" autocapitalize="characters" />
+                <span class="input input--ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg><input type="text" id="code" placeholder="Enter or paste code" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="19" />
+                  <span class="input__ghost" id="ghost" aria-hidden="true"></span>
                   <button class="input__trail" type="button" id="paste" data-tooltip="Paste code" aria-label="Paste code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></button></span></label>
               <p class="hint">The code is printed on the kit box, e.g. <code>xw45-34df-343s-1234</code>. Lost the box? It is also in your Customer Portal.</p>
               <div class="summary" id="summary" hidden></div>
@@ -36,6 +37,7 @@
                 <button class="btn btn--primary btn--block" id="go" type="button" disabled>Add</button>
               </div>
             </div>
+
           </main>
         </div>
       </div>
@@ -48,7 +50,8 @@
 <script src="../js/components.js"></script>
 <script src="mioty.js"></script>
 <script>
-  AppShell.mount({ app: 'mioty', title: '', back: "add.html", backLabel: 'Back', tabs: [] });
-  Mioty.kitCode();</script>
+  AppShell.mount({ app: 'mioty', title: 'I have a KIT', back: "add.html", backLabel: 'Back', tabs: [] });
+  Mioty.kitCode();
+</script>
 </body>
 </html>

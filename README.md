@@ -5,10 +5,9 @@ Cloud, walkable on a real phone with printed QR codes. Static HTML — no build,
 
 - `index.html` — start page: the three scenarios (Latvian), each with a Start button. Every run
   ends on "Successfully connected" with a button back here.
-- `qr-sheet.html` — printable A4: gateway QR, kit QR, 25 device QRs, .csv QR. The codes are drawn
-  in the browser from the page's own address, so print it from the hosted URL and they point at the
-  right site (or type the site URL into the field at the top). Offline alternative:
-  `python3 tools/make-qr.py <site url>` writes them to `qr/*.svg` (needs `pip3 install --user segno`).
+- `qr-sheet.html` — printable A4: ONE entry QR (the start page, https://viktorspr-maker.github.io/MIO/)
+  and 25 device QRs for scenario 2. Codes are drawn in the browser; the site URL field at the top
+  overrides the address they point at.
 - `app/` — the screens (source of truth: `shadcn/projects/App/prototypes/mioty/` in the design
   system repo; this is a self-contained copy with flat paths).
 - `vendor/jsqr.js` — in-app QR reader (jsQR 1.4.0, MIT); `vendor/qrcode.js` — QR encoder for the

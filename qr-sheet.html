@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-mode="wireframe">
+<html lang="lv" data-mode="wireframe">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mioty QR sheet</title>
+  <title>Mioty QR lapa</title>
   <!-- Installable: „Add to Home Screen" opens it full-screen, no browser bar -->
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -20,62 +20,89 @@
        this page's own address, so the sheet is right wherever the site is
        hosted — print it from the GitHub Pages URL. tools/make-qr.py is the
        offline alternative and writes the same codes to qr/*.svg. */
-    @page { size: A4 portrait; margin: 10mm; }
+    /* Zero page margin = the browser prints NO header/footer (URL, date, title
+       live in the margin area); the 10mm margin is padding on .a4 instead. */
+    @page { size: A4 portrait; margin: 0; }
     body { background: var(--background); }
     .a4 { width: 190mm; margin: 0 auto; padding: var(--spacing-4) 0; display: flex; flex-direction: column; gap: var(--spacing-4); }
     .a4__head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--foreground); padding-bottom: var(--spacing-2); }
     .a4__title { font-size: var(--text-xl); font-weight: var(--font-bold); }
     .a4__sub { font-size: var(--text-xs); color: var(--ink-2); }
-    .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-4); }
+    .entry { display: grid; grid-template-columns: 60mm 1fr; gap: var(--spacing-6); align-items: start; }
+    .entry__text { display: flex; flex-direction: column; gap: var(--spacing-3); }
+    .scn__name { display: flex; align-items: center; gap: var(--spacing-2); font-size: var(--text-sm); font-weight: var(--font-semibold); }
+    .scn__num { display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-5); height: var(--spacing-5); border-radius: var(--radius-full); background: var(--foreground); color: var(--background); font-size: var(--text-2xs); font-weight: var(--font-semibold); }
+    .scn p { margin: var(--spacing-1) 0 0; font-size: var(--text-xs); color: var(--ink-2); line-height: 1.5; }
     .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--spacing-3); }
     .qr { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-1); padding: var(--spacing-2); border: 1px solid var(--border); border-radius: var(--radius-md); break-inside: avoid; }
     .qr__img { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
     .qr__img svg { width: 100%; height: 100%; }
-    .qr--big .qr__img { max-width: 38mm; }
+    .qr--big .qr__img { max-width: 52mm; }
     .qr--dev .qr__img { max-width: 28mm; }
     .qr__label { font-size: var(--text-xs); font-weight: var(--font-semibold); text-align: center; }
     .qr__note { font-size: var(--text-2xs); color: var(--ink-2); text-align: center; line-height: 1.3; }
     .qr__code { font-family: ui-monospace, Menlo, monospace; font-size: var(--text-2xs); }
     .tools { display: flex; gap: var(--spacing-3); align-items: flex-end; }
     .tools .btn { flex: none; }
-    @media print { .tools, .hint { display: none; } .a4 { padding: 0; } }
+    @media print {
+      html, body { margin: 0; background: #fff; }
+      .tools, .hint { display: none; }
+      /* Everything in mm so the sheet is exactly one A4: header 10 + entry 58 +
+         5 sticker rows × 32 + gaps ≈ 250 of the 277 available. */
+      .a4 { width: 210mm; padding: 10mm; gap: 3mm; }
+      .a4__title { font-size: 14pt; }
+      .a4__sub { font-size: 8pt; }
+      .entry { grid-template-columns: 52mm 1fr; gap: 6mm; }
+      .qr--big .qr__img { max-width: 42mm; }
+      .qr--big .qr__label { font-size: 9pt; }
+      .qr__note, .scn p { font-size: 7.5pt; line-height: 1.35; }
+      .scn__name { font-size: 9pt; }
+      .grid { gap: 2.5mm; }
+      .qr { padding: 1.5mm; gap: 0.5mm; }
+      .qr--dev .qr__img { max-width: 24mm; }
+      .qr--dev .qr__label { font-size: 7pt; }
+    }
   </style>
 </head>
 <body>
   <div class="a4">
     <div class="a4__head">
-      <div class="a4__title">Mioty onboarding — QR sheet</div>
-      <div class="a4__sub">Print at 100 %. Codes open this site: <span class="qr__code" id="base"></span></div>
+      <div class="a4__title">Mioty onboarding tests — QR lapa</div>
+      <div class="a4__sub">Drukā 100 % mērogā. Kodi atver: <span class="qr__code" id="base"></span></div>
     </div>
     <!-- The codes point at whatever address this page is opened from. Opened
          from a file or localhost that would be useless on a phone, so the base
          can be typed in — the codes redraw as you type. Hidden in print. -->
     <div class="tools">
-      <label class="field" style="flex:1"><span class="field__label">Site URL the codes should open</span>
+      <label class="field" style="flex:1"><span class="field__label">Vietnes URL, uz kuru kodi ved</span>
         <span class="input"><input type="url" id="baseInput" placeholder="https://<user>.github.io/mioty-qr-test" autocomplete="off" spellcheck="false" /></span></label>
-      <button class="btn btn--outline print" onclick="print()">Print</button>
+      <button class="btn btn--outline print" onclick="print()">Drukāt</button>
     </div>
-    <p class="hint" id="warn" hidden>This page is not opened from its hosted address — type the GitHub Pages URL above, or the codes will point at this computer.</p>
+    <p class="hint" id="warn" hidden>Lapa nav atvērta no vietnes — kodi ved uz augšā norādīto adresi (pēc noklusējuma uz dzīvo vietni).</p>
 
-    <div class="row">
+    <!-- ONE entry code: the start page lists the three scenarios, so every
+         run starts here (user, 2026-09-10). Kit code is typed/pasted in the app,
+         the .csv is downloaded from the start page — no separate codes. -->
+    <div class="entry">
       <div class="qr qr--big">
-        <div class="qr__img" data-qr="gateway"></div>
-        <div class="qr__label">Gateway</div>
-        <div class="qr__note">What the gateway shows on its screen after PoE. Scan with the phone camera to start.</div>
+        <div class="qr__img" data-qr="start"></div>
+        <div class="qr__label">Mioty onboarding tests</div>
+        <div class="qr__note">Noskenē ar telefona kameru → atveras sākumlapa ar trim scenārijiem.<br /><span class="qr__code" id="startUrl"></span></div>
       </div>
-      <div class="qr qr--big">
-        <div class="qr__img" data-qr="kit"></div>
-        <div class="qr__label">Kit code</div>
-        <div class="qr__note">Printed on the kit box.<br /><span class="qr__code">xw45-34df-343s-1234</span> · 25 devices</div>
-      </div>
-      <div class="qr qr--big">
-        <div class="qr__img" data-qr="csv"></div>
-        <div class="qr__label">Device list (.csv)</div>
-        <div class="qr__note">Saves <span class="qr__code">mioty-devices.csv</span> to the phone for scenario 3.</div>
+      <div class="entry__text">
+        <div class="scn"><div class="scn__name"><span class="scn__num">1</span>Man ir KIT</div>
+          <p>Gateway kopā ar iepriekš sagatavotu ierīču komplektu. Noskenējot vienu Kit QR kodu, visas komplektā iekļautās
+            ierīces tiek pievienotas vienlaikus. Kit kods: <span class="qr__code">xw45-34df-343s-1234</span>.</p></div>
+        <div class="scn"><div class="scn__name"><span class="scn__num">2</span>Skenēt QR kodus</div>
+          <p>Scenārijs ierīcēm, kurām nav kopēja Kit QR koda. Katras ierīces QR kods tiek skenēts atsevišķi, un aplikācija
+            automātiski uzskaita noskenētās ierīces. Ierīču kodi — uzlīmes zemāk.</p></div>
+        <div class="scn"><div class="scn__name"><span class="scn__num">3</span>Augšupielādēt .csv failu</div>
+          <p>Scenārijs ar iepriekš sagatavotu ierīču sarakstu. Vispirms .csv fails tiek saglabāts telefonā (saite sākumlapā)
+            un pēc tam augšupielādēts aplikācijā.</p></div>
       </div>
     </div>
 
-    <div class="a4__sub">Device stickers — scenario 2. Scan them one after another inside the app.</div>
+    <div class="a4__sub">Ierīču uzlīmes — 2. scenārijs. Skenē tās aplikācijā vienu pēc otras (MIOTY-0001 … 0025).</div>
     <div class="grid" id="devices"></div>
   </div>
   <script>
@@ -86,21 +113,18 @@
 
     /* Every code is a URL into the app, so the phone's own camera app can read
        it as well as the scanner inside the app. Same targets as tools/make-qr.py. */
-    const KIT = 'xw45-34df-343s-1234';
+    const SITE = 'https://viktorspr-maker.github.io/MIO';   /* the live site — default wherever the sheet is opened */
     const input = document.getElementById('baseInput'), warn = document.getElementById('warn');
     const detected = new URL('.', location.href).href.replace(/\/$/, '');
     const hosted = /^https:/.test(detected) && !/localhost|127\.0\.0\.1/.test(detected);
-    let saved = ''; try { saved = localStorage.getItem('qrSheetBase') || ''; } catch (_) {}
-    input.value = hosted ? detected : saved;
+    input.value = hosted ? detected : SITE;
     warn.hidden = hosted;
     const draw = () => {
       const base = (input.value.trim() || detected).replace(/\/$/, '');
       document.getElementById('base').textContent = base;
-      try { if (input.value.trim()) localStorage.setItem('qrSheetBase', base); } catch (_) {}
+      document.getElementById('startUrl').textContent = base + '/';
       const target = (el) => ({
-        gateway: `${base}/app/index.html`,
-        kit: `${base}/app/kit.html?code=${KIT}`,
-        csv: `${base}/mioty-devices.csv`,
+        start: `${base}/`,
         device: `${base}/app/scan.html?d=${el.dataset.id}`,
       })[el.dataset.qr];
       document.querySelectorAll('[data-qr]').forEach((el) => {

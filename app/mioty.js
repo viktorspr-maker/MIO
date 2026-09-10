@@ -71,8 +71,22 @@
       btn.disabled = !ok; sum.hidden = !ok;
       if (ok) sum.textContent = `You will add ${KIT.devices} Mioty devices to workspace: ${load().workspace}`;
     };
-    input.addEventListener('input', sync);
-    $('paste').addEventListener('click', () => { input.value = KIT.code; sync(); input.focus(); });
+    /* Ghost: the expected code sits grey behind the caret; typed characters
+       cover it one by one (user, 2026-09-10: „lai viņam rādās jau simboli
+       ghosted"). Dashes are inserted for the user at positions 4, 9, 14. */
+    const ghost = $('ghost');
+    const paintGhost = () => {
+      if (!ghost) return;
+      const typed = input.value;
+      ghost.innerHTML = `<i>${typed.replace(/</g, '&lt;')}</i>${KIT.code.slice(typed.length)}`;
+    };
+    input.addEventListener('input', () => {
+      let v = input.value.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 16);
+      input.value = v.replace(/(.{4})(?=.)/g, '$1-');
+      paintGhost(); sync();
+    });
+    $('paste').addEventListener('click', () => { input.value = KIT.code; paintGhost(); sync(); input.focus(); });
+    paintGhost();
     btn.addEventListener('click', () => { save({ devices: KIT.devices, method: 'kit' }); go('connecting.html'); });
     sync();
   }
@@ -138,7 +152,7 @@
           stream = s; video.srcObject = s; video.hidden = false; cam.classList.add('cam--live');
           return video.play();
         })
-        .then(() => { status.textContent = 'Camera on. Hold a device QR in the frame.'; requestAnimationFrame(tick); })
+        .then(() => { status.textContent = detector ? 'Camera on. Hold a device QR in the frame.' : 'Camera on. Hold a device QR in the frame, close enough to fill it.'; requestAnimationFrame(tick); })
         .catch((err) => {
           cam.classList.remove('cam--live'); video.hidden = true; camBtn.hidden = false;
           status.textContent = (err && err.name === 'NotAllowedError')
@@ -146,20 +160,42 @@
             : 'Could not start the camera — tap “Turn on camera” to retry, or tap the frame to fake a scan.';
         });
     }
+    /* Reading the frames. Two engines:
+         · BarcodeDetector — the platform's own reader (Android Chrome). Fast and
+           tolerant; it gets the whole video element.
+         · jsQR — everywhere else (iOS Safari has no BarcodeDetector). It gets
+           the CENTRE SQUARE of the frame at native resolution — roughly what the
+           on-screen frame shows. Downscaling the whole 1280px frame to 480px
+           (the first version) left a 28mm sticker at ~2px per module, which
+           jsQR cannot read. The crop keeps ~5px per module and is cheaper too. */
+    let detector = null;
+    try { if ('BarcodeDetector' in window) detector = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (_) { detector = null; }
     const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d', { willReadFrequently: true });
-    let last = '', lastAt = 0, frameNo = 0;
+    let last = '', lastAt = 0, busy = false;
+    function grabCentre() {
+      const vw = video.videoWidth, vh = video.videoHeight;
+      const side = Math.round(Math.min(vw, vh) * 0.82);
+      const sx = Math.round((vw - side) / 2), sy = Math.round((vh - side) / 2);
+      const out = Math.min(side, 720);
+      canvas.width = canvas.height = out;
+      ctx.drawImage(video, sx, sy, side, side, 0, 0, out, out);
+      return ctx.getImageData(0, 0, out, out);
+    }
     function tick() {
       if (!stream) return;
-      frameNo += 1;
-      if (frameNo % 2 === 0 && video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth) {
-        const scale = Math.min(1, 480 / Math.max(video.videoWidth, video.videoHeight));
-        canvas.width = Math.round(video.videoWidth * scale); canvas.height = Math.round(video.videoHeight * scale);
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const hit = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
-        if (hit && hit.data) decode(hit.data);
+      if (!busy && video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth) {
+        if (detector) {
+          busy = true;
+          detector.detect(video).then((codes) => { codes.forEach((c) => decode(c.rawValue)); })
+            .catch(() => { detector = null; })          /* engine broke — fall back to jsQR */
+            .finally(() => { busy = false; });
+        } else {
+          const img = grabCentre();
+          const hit = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+          if (hit && hit.data) decode(hit.data);
+        }
       }
-      requestAnimationFrame(tick);
+      setTimeout(() => requestAnimationFrame(tick), detector ? 120 : 60);
     }
     /* One entry point for whatever the camera read — also what the tests feed. */
     function decode(text) {
