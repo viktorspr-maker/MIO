@@ -14,9 +14,12 @@
   <meta name="theme-color" content="#ffffff" />
   <link rel="stylesheet" href="lib/shadcn.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <script src="vendor/qrcode.js"></script>
   <style>
-    /* One A4 page. Codes come from tools/make-qr.py (qr/*.svg); until it has
-       run, each slot shows its label so the layout can still be checked. */
+    /* One A4 page. The codes are drawn in the browser (vendor/qrcode.js) from
+       this page's own address, so the sheet is right wherever the site is
+       hosted — print it from the GitHub Pages URL. tools/make-qr.py is the
+       offline alternative and writes the same codes to qr/*.svg. */
     @page { size: A4 portrait; margin: 10mm; }
     body { background: var(--background); }
     .a4 { width: 190mm; margin: 0 auto; padding: var(--spacing-4) 0; display: flex; flex-direction: column; gap: var(--spacing-4); }
@@ -26,38 +29,47 @@
     .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-4); }
     .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--spacing-3); }
     .qr { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-1); padding: var(--spacing-2); border: 1px solid var(--border); border-radius: var(--radius-md); break-inside: avoid; }
-    .qr img { width: 100%; aspect-ratio: 1; object-fit: contain; }
-    .qr--big img { max-width: 38mm; }
-    .qr--dev img { max-width: 28mm; }
+    .qr__img { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
+    .qr__img svg { width: 100%; height: 100%; }
+    .qr--big .qr__img { max-width: 38mm; }
+    .qr--dev .qr__img { max-width: 28mm; }
     .qr__label { font-size: var(--text-xs); font-weight: var(--font-semibold); text-align: center; }
     .qr__note { font-size: var(--text-2xs); color: var(--ink-2); text-align: center; line-height: 1.3; }
     .qr__code { font-family: ui-monospace, Menlo, monospace; font-size: var(--text-2xs); }
-    img[src]:not([src=""]) + .fallback { display: none; }
-    .print { align-self: flex-start; }
-    @media print { .print { display: none; } .a4 { padding: 0; } }
+    .tools { display: flex; gap: var(--spacing-3); align-items: flex-end; }
+    .tools .btn { flex: none; }
+    @media print { .tools, .hint { display: none; } .a4 { padding: 0; } }
   </style>
 </head>
 <body>
   <div class="a4">
     <div class="a4__head">
       <div class="a4__title">Mioty onboarding — QR sheet</div>
-      <div class="a4__sub">Print at 100 %. Codes open the test app; generate them with <span class="qr__code">tools/make-qr.py &lt;site url&gt;</span></div>
+      <div class="a4__sub">Print at 100 %. Codes open this site: <span class="qr__code" id="base"></span></div>
     </div>
-    <button class="btn btn--outline btn--sm print" onclick="print()">Print</button>
+    <!-- The codes point at whatever address this page is opened from. Opened
+         from a file or localhost that would be useless on a phone, so the base
+         can be typed in — the codes redraw as you type. Hidden in print. -->
+    <div class="tools">
+      <label class="field" style="flex:1"><span class="field__label">Site URL the codes should open</span>
+        <span class="input"><input type="url" id="baseInput" placeholder="https://<user>.github.io/mioty-qr-test" autocomplete="off" spellcheck="false" /></span></label>
+      <button class="btn btn--outline print" onclick="print()">Print</button>
+    </div>
+    <p class="hint" id="warn" hidden>This page is not opened from its hosted address — type the GitHub Pages URL above, or the codes will point at this computer.</p>
 
     <div class="row">
       <div class="qr qr--big">
-        <img src="qr/gateway.svg" alt="" onerror="this.removeAttribute('src')" />
+        <div class="qr__img" data-qr="gateway"></div>
         <div class="qr__label">Gateway</div>
         <div class="qr__note">What the gateway shows on its screen after PoE. Scan with the phone camera to start.</div>
       </div>
       <div class="qr qr--big">
-        <img src="qr/kit.svg" alt="" onerror="this.removeAttribute('src')" />
+        <div class="qr__img" data-qr="kit"></div>
         <div class="qr__label">Kit code</div>
         <div class="qr__note">Printed on the kit box.<br /><span class="qr__code">xw45-34df-343s-1234</span> · 25 devices</div>
       </div>
       <div class="qr qr--big">
-        <img src="qr/csv.svg" alt="" onerror="this.removeAttribute('src')" />
+        <div class="qr__img" data-qr="csv"></div>
         <div class="qr__label">Device list (.csv)</div>
         <div class="qr__note">Saves <span class="qr__code">mioty-devices.csv</span> to the phone for scenario 3.</div>
       </div>
@@ -68,9 +80,37 @@
   </div>
   <script>
     document.getElementById('devices').innerHTML = Array.from({ length: 25 }, (_, i) => {
-      const n = String(i + 1).padStart(2, '0'), id = 'MIOTY-' + String(i + 1).padStart(4, '0');
-      return `<div class="qr qr--dev"><img src="qr/device-${n}.svg" alt="" onerror="this.removeAttribute('src')" /><div class="qr__label">${id}</div></div>`;
+      const id = 'MIOTY-' + String(i + 1).padStart(4, '0');
+      return `<div class="qr qr--dev"><div class="qr__img" data-qr="device" data-id="${id}"></div><div class="qr__label">${id}</div></div>`;
     }).join('');
+
+    /* Every code is a URL into the app, so the phone's own camera app can read
+       it as well as the scanner inside the app. Same targets as tools/make-qr.py. */
+    const KIT = 'xw45-34df-343s-1234';
+    const input = document.getElementById('baseInput'), warn = document.getElementById('warn');
+    const detected = new URL('.', location.href).href.replace(/\/$/, '');
+    const hosted = /^https:/.test(detected) && !/localhost|127\.0\.0\.1/.test(detected);
+    let saved = ''; try { saved = localStorage.getItem('qrSheetBase') || ''; } catch (_) {}
+    input.value = hosted ? detected : saved;
+    warn.hidden = hosted;
+    const draw = () => {
+      const base = (input.value.trim() || detected).replace(/\/$/, '');
+      document.getElementById('base').textContent = base;
+      try { if (input.value.trim()) localStorage.setItem('qrSheetBase', base); } catch (_) {}
+      const target = (el) => ({
+        gateway: `${base}/app/index.html`,
+        kit: `${base}/app/kit.html?code=${KIT}`,
+        csv: `${base}/mioty-devices.csv`,
+        device: `${base}/app/scan.html?d=${el.dataset.id}`,
+      })[el.dataset.qr];
+      document.querySelectorAll('[data-qr]').forEach((el) => {
+        const q = qrcode(0, 'M'); q.addData(target(el)); q.make();
+        el.innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+        el.title = target(el);
+      });
+    };
+    input.addEventListener('input', draw);
+    draw();
   </script>
 </body>
 </html>

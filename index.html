@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <!-- Start page of the Mioty QR test app. Stamps the wireframe mode itself: it
      runs no AppShell (it is not one of the app's screens). -->
-<html lang="en" data-mode="wireframe">
+<html lang="lv" data-mode="wireframe">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Mioty onboarding test</title>
+  <title>Mioty onboarding tests</title>
   <!-- Installable: „Add to Home Screen" opens it full-screen, no browser bar -->
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -36,56 +36,60 @@
 <body>
   <main class="start">
     <div>
-      <h1 class="start__title">Mioty onboarding test</h1>
-      <p class="start__lead">Three ways to get a Mioty Gateway and its kit of devices into Aranet Cloud — from the
-        EP.02 journey map. Each one can be walked through on a phone with real QR codes.
-        Wireframe prototype; nothing here is connected to anything.</p>
+      <h1 class="start__title">Mioty onboarding tests</h1>
+      <p class="start__lead">Trīs scenāriji, kā pievienot Mioty Gateway un tam piesaistītās ierīces Aranet Cloud, balstoties
+        uz EP.02 journey map. Katru scenāriju iespējams reāli iziet mobilajā telefonā, izmantojot QR kodus.<br />
+        Šis ir wireframe prototips testēšanai — tas nav savienots ar reālām ierīcēm vai Aranet Cloud.</p>
     </div>
 
     <div class="sheet">
       <span>🖨</span>
-      <span>Print the <a href="qr-sheet.html">QR sheet (A4)</a> first: one gateway code, one kit code, 25 device codes, one .csv link.</span>
+      <span>Vispirms izdrukā <a href="qr-sheet.html">QR kodu A4 lapu</a>. Tajā ir: 1 Gateway QR kods · 1 Kit QR kods ·
+        25 ierīču QR kodi · 1 QR kods .csv faila lejupielādei.</span>
     </div>
 
     <section class="sc">
-      <div class="sc__head"><span class="sc__num">1</span><span class="sc__name">I have a KIT</span></div>
-      <p class="sc__text">Gateway plus a boxed kit. One code registers every device in the kit at once.</p>
+      <div class="sc__head"><span class="sc__num">1</span><span class="sc__name">Man ir KIT</span></div>
+      <p class="sc__text">Gateway kopā ar iepriekš sagatavotu ierīču komplektu. Noskenējot vienu Kit QR kodu, visas komplektā
+        iekļautās ierīces tiek pievienotas vienlaikus.</p>
       <ol class="sc__steps">
-        <li>Scan the <b>Gateway QR</b> with the phone camera → Hello Mioty → Start</li>
-        <li>Existing user → Login → Choose workspace</li>
-        <li><b>I have a KIT</b> → paste or scan the <b>Kit QR</b> → Add</li>
+        <li>Ar telefona kameru noskenē <b>Gateway QR kodu</b> → Hello Mioty → Start</li>
+        <li>Esošs lietotājs → Login → izvēlies workspace</li>
+        <li>Izvēlies <b>I have a KIT</b> → ievadi vai noskenē <b>Kit QR kodu</b> → Add</li>
         <li>Connecting Devices → Successfully connected</li>
       </ol>
       <a class="btn btn--primary btn--block" href="app/index.html">Start scenario 1</a>
     </section>
 
     <section class="sc">
-      <div class="sc__head"><span class="sc__num">2</span><span class="sc__name">Scan QR codes</span></div>
-      <p class="sc__text">Devices without a kit code. Scan each device sticker in a row; the app counts them.</p>
+      <div class="sc__head"><span class="sc__num">2</span><span class="sc__name">Skenēt QR kodus</span></div>
+      <p class="sc__text">Scenārijs ierīcēm, kurām nav kopēja Kit QR koda. Katras ierīces QR kods tiek skenēts atsevišķi, un
+        aplikācija automātiski uzskaita noskenētās ierīces.</p>
       <ol class="sc__steps">
-        <li>Gateway QR → Hello Mioty → Login → Choose workspace</li>
-        <li><b>Scan QR code</b> → camera opens inside the app → hold the <b>device QRs</b> one after another</li>
-        <li>The button counts: <b>Add (n) Mioty devices</b> → tap it</li>
+        <li>Noskenē Gateway QR kodu → Hello Mioty → Login → izvēlies workspace</li>
+        <li>Izvēlies <b>Scan QR code</b> → aplikācijā atveras kamera → secīgi noskenē <b>ierīču QR kodus</b></li>
+        <li>Poga automātiski rāda noskenēto ierīču skaitu: <b>Add (n) Mioty devices</b> → nospied to</li>
         <li>Connecting Devices → Successfully connected</li>
       </ol>
       <a class="btn btn--primary btn--block" href="app/index.html">Start scenario 2</a>
     </section>
 
     <section class="sc">
-      <div class="sc__head"><span class="sc__num">3</span><span class="sc__name">Upload .csv file</span></div>
-      <p class="sc__text">A prepared device list. Save it to the phone, then pick it from the app.</p>
+      <div class="sc__head"><span class="sc__num">3</span><span class="sc__name">Augšupielādēt .csv failu</span></div>
+      <p class="sc__text">Scenārijs ar iepriekš sagatavotu ierīču sarakstu. Vispirms .csv fails tiek saglabāts telefonā un pēc
+        tam augšupielādēts aplikācijā.</p>
       <ol class="sc__steps">
-        <li>Scan the <b>.csv QR</b> with the phone camera → the file downloads to the phone</li>
-        <li>Gateway QR → Hello Mioty → Login → Choose workspace</li>
-        <li><b>Upload .csv file</b> → Choose a .csv from this phone → Add</li>
+        <li>Ar telefona kameru noskenē <b>.csv QR kodu</b> → .csv fails tiek lejupielādēts telefonā</li>
+        <li>Noskenē Gateway QR kodu → Hello Mioty → Login → izvēlies workspace</li>
+        <li>Izvēlies <b>Upload .csv file</b> → izvēlies telefonā saglabāto .csv failu → Add</li>
         <li>Connecting Devices → Successfully connected</li>
       </ol>
       <a class="btn btn--primary btn--block" href="app/index.html">Start scenario 3</a>
     </section>
 
-    <p class="foot">Every scenario ends on “Successfully connected” with a button back to this page. On a laptop the
-      app shows inside a phone frame and the camera is faked (tap the frame). On a phone, open this page over HTTPS
-      for the real camera.</p>
+    <p class="foot">Visi trīs scenāriji noslēdzas ar Successfully connected ekrānu, no kura iespējams atgriezties sākuma lapā.
+      Datorā prototips tiek attēlots telefona rāmī, un kameras darbība tiek simulēta. Savukārt, atverot prototipu telefonā
+      caur HTTPS, iespējams izmantot telefona īsto kameru un iziet visu QR kodu skenēšanas plūsmu.</p>
   </main>
 </body>
 </html>

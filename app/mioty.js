@@ -118,32 +118,65 @@
     $('enter').addEventListener('click', () => { const c = codeFrom(prompt('Device code (MIOTY-0001 … 0025)') || ''); if (c) add(c); else status.textContent = 'Not a Mioty code.'; });
     btn.addEventListener('click', () => { save({ devices: found.length, method: 'scan' }); writeScanned([]); go('connecting.html'); });
     sync();
-    /* way 1 — live camera, only where it can work */
-    if (window.jsQR && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && video) {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then((stream) => {
-        video.srcObject = stream; video.hidden = false; cam.classList.add('cam--live');
-        status.textContent = 'Camera on. Hold a device QR in the frame.';
-        const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d', { willReadFrequently: true });
-        let last = '', lastAt = 0;
-        const tick = () => {
-          if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0);
-            const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const hit = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
-            if (hit && hit.data) {
-              const code = codeFrom(hit.data), now = Date.now();
-              if (code && !(code === last && now - lastAt < 1500)) { last = code; lastAt = now; add(code); if (navigator.vibrate) navigator.vibrate(40); }
-              else if (!code) status.textContent = 'That QR is not a Mioty device.';
-            }
-          }
-          requestAnimationFrame(tick);
-        };
-        video.play().then(tick);
-      }).catch(() => { status.textContent = 'No camera access — tap the frame to fake a scan, or use “Enter code”.'; });
-    } else if (video) {
-      status.textContent = location.protocol === 'https:' ? 'No in-app scanner here — tap the frame to fake a scan.' : 'Camera needs HTTPS — open the GitHub Pages link on the phone.';
+    /* way 1 — the phone camera inside the app. Only where it can work:
+       HTTPS (or localhost) and getUserMedia present. Frames are decoded by jsQR
+       from a downscaled canvas (≤480px) every other frame — full-size 1080p
+       frames stall mid-range phones. iOS quirks covered: playsinline+muted+
+       autoplay on the <video>, play() called after the stream attaches, and a
+       „Turn on camera" button as a user-gesture fallback if autoplay or the
+       permission prompt fails. */
+    let stream = null;
+    const camBtn = document.createElement('button');
+    camBtn.type = 'button'; camBtn.className = 'btn btn--outline btn--block'; camBtn.textContent = 'Turn on camera'; camBtn.hidden = true;
+    status.before(camBtn);
+    const canScan = window.jsQR && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && video
+      && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname));
+    function startCamera() {
+      camBtn.hidden = true; status.textContent = 'Starting camera…';
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+        .then((s) => {
+          stream = s; video.srcObject = s; video.hidden = false; cam.classList.add('cam--live');
+          return video.play();
+        })
+        .then(() => { status.textContent = 'Camera on. Hold a device QR in the frame.'; requestAnimationFrame(tick); })
+        .catch((err) => {
+          cam.classList.remove('cam--live'); video.hidden = true; camBtn.hidden = false;
+          status.textContent = (err && err.name === 'NotAllowedError')
+            ? 'Camera permission denied — allow it in the browser settings, or tap the frame to fake a scan.'
+            : 'Could not start the camera — tap “Turn on camera” to retry, or tap the frame to fake a scan.';
+        });
     }
+    const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d', { willReadFrequently: true });
+    let last = '', lastAt = 0, frameNo = 0;
+    function tick() {
+      if (!stream) return;
+      frameNo += 1;
+      if (frameNo % 2 === 0 && video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth) {
+        const scale = Math.min(1, 480 / Math.max(video.videoWidth, video.videoHeight));
+        canvas.width = Math.round(video.videoWidth * scale); canvas.height = Math.round(video.videoHeight * scale);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const hit = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+        if (hit && hit.data) decode(hit.data);
+      }
+      requestAnimationFrame(tick);
+    }
+    /* One entry point for whatever the camera read — also what the tests feed. */
+    function decode(text) {
+      const code = codeFrom(text), now = Date.now();
+      if (!code) { status.textContent = 'That QR is not a Mioty device.'; return false; }
+      if (code === last && now - lastAt < 1500) return false;     /* same sticker still in view */
+      last = code; lastAt = now; add(code);
+      if (navigator.vibrate) navigator.vibrate(40);
+      return true;
+    }
+    window.Mioty.decode = decode;
+    camBtn.addEventListener('click', startCamera);
+    window.addEventListener('pagehide', () => { if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; });
+    if (canScan) startCamera();
+    else if (video) status.textContent = (location.protocol === 'https:' || location.hostname === 'localhost')
+      ? 'No in-app scanner here — tap the frame to fake a scan.'
+      : 'Camera needs HTTPS — open the GitHub Pages link on the phone.';
   }
 
   /* Upload .csv — a stand-in for the OS picker: one list, one right answer. */
