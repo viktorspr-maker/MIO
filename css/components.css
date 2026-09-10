@@ -179,7 +179,8 @@
 }
 .cam__close { z-index: 3; }
 .cam--live .cam__qr { display: none; }            /* the fake code hides once the camera runs */
-.cam--live .cam__line { display: none; }
+/* the moving green line stays on over the live camera - it says 'scanning' (user, 2026-09-10) */
+.cam--live .cam__line { z-index: 1; }
 .cam--live .cam__frame::before, .cam--live .cam__frame::after,
 .cam--live .cam__frame > i::before, .cam--live .cam__frame > i::after { border-color: rgba(255, 255, 255, 0.95); border-width: 3px; }
 .cam__status { font-size: var(--text-sm); color: #fff; text-align: center; line-height: 1.4; min-height: calc(var(--text-sm) * 2.8); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
@@ -198,3 +199,36 @@
 .input--ghost > input::placeholder { color: transparent; }
 .input__ghost { position: absolute; left: calc(var(--spacing-3) + var(--spacing-4) + var(--spacing-2)); top: 0; height: 100%; display: flex; align-items: center; pointer-events: none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--text-base); letter-spacing: 0.02em; color: var(--muted-foreground); white-space: pre; }
 .input__ghost i { font-style: normal; visibility: hidden; }   /* the part already typed */
+
+/* ── scan feedback — microinteractions (user, 2026-09-10: „nav uzkrītošas
+      identifikācijas"). Three states, each a colour on the frame corners, a
+      short flash over the frame and a big pill in the middle:
+        ok  → green, ✓ + the code        dup → amber, „Already scanned"
+        bad → red, „Not a device code"   ── */
+.cam__frame::before, .cam__frame::after, .cam__frame > i::before, .cam__frame > i::after { transition: border-color 0.15s; }
+.cam__frame[data-state="ok"]::before,  .cam__frame[data-state="ok"]::after,  .cam__frame[data-state="ok"] > i::before,  .cam__frame[data-state="ok"] > i::after  { border-color: rgba(34, 197, 94, 1) !important; }
+.cam__frame[data-state="dup"]::before, .cam__frame[data-state="dup"]::after, .cam__frame[data-state="dup"] > i::before, .cam__frame[data-state="dup"] > i::after { border-color: rgba(245, 158, 11, 1) !important; }
+.cam__frame[data-state="bad"]::before, .cam__frame[data-state="bad"]::after, .cam__frame[data-state="bad"] > i::before, .cam__frame[data-state="bad"] > i::after { border-color: rgba(239, 68, 68, 1) !important; }
+.cam__flash { position: absolute; inset: 0; border-radius: var(--radius-md); opacity: 0; pointer-events: none; }
+.cam__frame[data-state="ok"]  .cam__flash { background: rgba(34, 197, 94, 0.45);  animation: cam-flash 0.7s ease-out; }
+.cam__frame[data-state="dup"] .cam__flash { background: rgba(245, 158, 11, 0.45); animation: cam-flash 0.9s ease-out; }
+.cam__frame[data-state="bad"] .cam__flash { background: rgba(239, 68, 68, 0.45);  animation: cam-flash 0.9s ease-out; }
+@keyframes cam-flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+.cam__toast {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: inline-flex; align-items: center; gap: var(--spacing-2);
+  max-width: 92%; padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-full); background: #fff; color: var(--foreground);
+  font-size: var(--text-base); font-weight: var(--font-semibold); white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); pointer-events: none; z-index: 2;
+  animation: cam-toast 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+.cam__toast[hidden] { display: none; }
+.cam__toast--ok  { background: rgba(34, 197, 94, 1);  color: #fff; }
+.cam__toast--dup { background: rgba(245, 158, 11, 1); color: #000; }
+.cam__toast--bad { background: rgba(239, 68, 68, 1);  color: #fff; }
+.cam__toast svg { width: var(--spacing-5); height: var(--spacing-5); flex: none; }
+@keyframes cam-toast { from { transform: translate(-50%, -50%) scale(0.6); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+/* the count on the Add button jumps when it changes */
+.btn--bump { animation: btn-bump 0.35s ease-out; }
+@keyframes btn-bump { 30% { transform: scale(1.06); } }

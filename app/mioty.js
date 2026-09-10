@@ -118,9 +118,20 @@
        3. a tap on the frame fakes one (desktop, or no camera).
      Codes are kept in localStorage so way 2, which reloads the page per scan,
      still counts up. The CTA counts like Figma: „Add (22) Mioty devices". */
-  const SCAN_KEY = 'mioty:scanned';
-  const readScanned = () => { try { return JSON.parse(localStorage.getItem(SCAN_KEY) || '[]'); } catch (_) { return []; } };
-  const writeScanned = (arr) => { try { localStorage.setItem(SCAN_KEY, JSON.stringify(arr)); } catch (_) {} };
+  /* The scanned list survives page loads ONLY for the phone-camera route, where
+     every sticker opens scan.html?d=… afresh. Opened plainly from the app it
+     starts empty, ✕ clears it, Add clears it, and it expires after 10 minutes —
+     otherwise codes from an abandoned attempt showed up „by default"
+     (user, 2026-09-10: „kāpēc jau noklusējumā ir mioty-0010 un 0009?"). */
+  const SCAN_KEY = 'mioty:scanned', SCAN_TTL = 10 * 60 * 1000;
+  const readScanned = () => {
+    try {
+      const v = JSON.parse(localStorage.getItem(SCAN_KEY) || 'null');
+      if (!v || !Array.isArray(v.codes) || Date.now() - (v.at || 0) > SCAN_TTL) return [];
+      return v.codes;
+    } catch (_) { return []; }
+  };
+  const writeScanned = (arr) => { try { localStorage.setItem(SCAN_KEY, JSON.stringify({ codes: arr, at: Date.now() })); } catch (_) {} };
   /* What a scanned QR (or a typed string) means. Accepts every form a device
      code has ever been printed in — bare `MIOTY-0007`, the long
      `…/app/scan.html?d=MIOTY-0007`, the short `…/s/?7` — so stickers from an
@@ -146,7 +157,11 @@
     return 'Not a device code: ' + (t.length > 40 ? t.slice(0, 40) + '…' : t);
   };
   function scanner() {
-    let found = readScanned(); let fake = 0;
+    /* Arrived with a code (phone-camera route) → continue the list; opened
+       plainly (from „Add Mioty device/-s") → a clean start. */
+    const arrivedWithCode = /[?&]d=/.test(location.search);
+    let found = arrivedWithCode ? readScanned() : []; let fake = 0;
+    writeScanned(found);
     const btn = $('go'), undo = $('undo'), status = $('status'), frame = $('frame'), video = $('video');
     const cam = document.querySelector('.cam');
     let chips = document.querySelector('.cam__found');
@@ -171,19 +186,43 @@
       chip.classList.add('cam__chip--flash');
       setTimeout(() => { chip.classList.remove('cam__chip--flash'); if (temp) chip.remove(); }, 1800);
     };
+    /* Big, unmistakable feedback in the frame itself — colour, flash, pill,
+       haptics — so the user never has to read the status line to know what
+       just happened. */
+    const ICONS = {
+      ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+      dup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+      bad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+    };
+    const toast = $('toast');
+    let feedbackTimer = null;
+    const feedback = (kind, text) => {
+      frame.dataset.state = kind;
+      if (toast) {
+        toast.className = 'cam__toast cam__toast--' + kind; toast.innerHTML = ICONS[kind] + '<span></span>';
+        toast.lastChild.textContent = text; toast.hidden = false;
+      }
+      if (navigator.vibrate) navigator.vibrate(kind === 'ok' ? 60 : kind === 'dup' ? [40, 80, 40] : [120]);
+      clearTimeout(feedbackTimer);
+      feedbackTimer = setTimeout(() => { delete frame.dataset.state; if (toast) toast.hidden = true; }, kind === 'ok' ? 1100 : 1600);
+    };
+    const bump = () => { btn.classList.remove('btn--bump'); void btn.offsetWidth; btn.classList.add('btn--bump'); };
     const add = (code) => {
       if (found.includes(code)) {
         status.textContent = `${code} already scanned.`; flashChip(code);
-        if (navigator.vibrate) navigator.vibrate([30, 60, 30]);
+        feedback('dup', `Already scanned · ${code}`);
         return;
       }
-      found.push(code); status.textContent = `${code} read.`; sync();
+      found.push(code); status.textContent = `${code} read.`; sync(); bump();
+      feedback('ok', code);
     };
     /* way 2 — arrived here from the phone's camera app */
     try { const d = codeFrom(location.search.replace(/^\?/, 'scan.html?')); if (d) { add(d); history.replaceState(null, '', 'scan.html'); } } catch (_) {}
     /* way 3 — fake */
     frame.addEventListener('click', () => { fake += 1; add(`MIOTY-${String(9000 + fake).padStart(4, '0')}`); });
     undo.addEventListener('click', () => { found.pop(); sync(); status.textContent = 'Last one removed.'; });
+    const close = document.querySelector('.cam__close');
+    if (close) close.addEventListener('click', () => writeScanned([]));    /* leaving without Add forgets the list */
     $('enter').addEventListener('click', () => { const t = prompt('Device code (MIOTY-0001 … 0025, or just the number)') || ''; const c = codeFrom(/^\d{1,4}$/.test(t.trim()) ? 'MIOTY-' + t.trim() : t); if (c) add(c); else if (t) status.textContent = whatIsIt(t); });
     btn.addEventListener('click', () => { save({ devices: found.length, method: 'scan' }); writeScanned([]); go('connecting.html'); });
     sync();
@@ -287,10 +326,9 @@
     /* One entry point for whatever the camera read — also what the tests feed. */
     function decode(text) {
       const code = codeFrom(text), now = Date.now();
-      if (!code) { status.textContent = whatIsIt(text); return false; }
+      if (!code) { status.textContent = whatIsIt(text); feedback('bad', 'Not a device code'); return false; }
       if (code === last && now - lastAt < 1500) { lastAt = now; return false; }   /* same sticker still in view — quiet */
       last = code; lastAt = now; add(code);
-      if (navigator.vibrate) navigator.vibrate(40);
       return true;
     }
     window.Mioty.decode = decode;
