@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<!-- Start page of the Mioty QR test app. Stamps the wireframe mode itself: it
+     runs no AppShell (it is not one of the app's screens). -->
+<html lang="lv" data-mode="wireframe">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Mioty onboarding tests</title>
+  <!-- Installable: „Add to Home Screen" opens it full-screen, no browser bar -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Mioty test" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="lib/tailwind.css" />
+  <link rel="stylesheet" href="lib/shadcn.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .start { max-width: calc(var(--spacing) * 150); margin-inline: auto; padding: var(--spacing-6) var(--spacing-4) var(--spacing-12); display: flex; flex-direction: column; gap: var(--spacing-5); }
+    .foot + .foot { margin-top: calc(var(--spacing-3) * -1); }
+    .start__title { font-size: var(--text-3xl); font-weight: var(--font-bold); letter-spacing: -0.3px; }
+    .start__lead { font-size: var(--text-sm); color: var(--ink-2); line-height: 1.5; }
+    .sc { display: flex; flex-direction: column; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--card); }
+    .sc__head { display: flex; align-items: center; gap: var(--spacing-3); }
+    .sc__num { display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-8); height: var(--spacing-8); border-radius: var(--radius-full); background: var(--primary); color: var(--primary-foreground); font-size: var(--text-sm); font-weight: var(--font-semibold); flex: none; }
+    .sc__name { font-size: var(--text-lg); font-weight: var(--font-semibold); }
+    .sc__text { font-size: var(--text-sm); color: var(--ink-2); line-height: 1.5; }
+    .sc__text a { color: var(--foreground); font-weight: var(--font-medium); }
+    .sc__steps { margin: 0; padding-left: var(--spacing-5); font-size: var(--text-sm); color: var(--ink-2); line-height: 1.6; }
+    .sc__steps b { color: var(--foreground); font-weight: var(--font-medium); }
+    .sc__steps a { color: var(--foreground); font-weight: var(--font-medium); }
+    .code { font-family: ui-monospace, Menlo, monospace; font-size: var(--text-xs); color: var(--foreground); }
+    .sheet { display: flex; gap: var(--spacing-3); align-items: flex-start; padding: var(--spacing-3) var(--spacing-4); border: 1px dashed var(--input); border-radius: var(--radius-lg); font-size: var(--text-sm); color: var(--ink-2); }
+    .sheet a { color: var(--foreground); font-weight: var(--font-medium); }
+    .sheet__list { margin: var(--spacing-1) 0 0; padding-left: var(--spacing-5); line-height: 1.6; }
+    .foot { font-size: var(--text-xs); color: var(--muted-foreground); line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <main class="start">
+    <div>
+      <h1 class="start__title">Mioty onboarding tests</h1>
+      <p class="start__lead">Trīs scenāriji, kā pievienot Mioty Gateway un tam piesaistītās ierīces Aranet Cloud, balstoties
+        uz EP.02 journey map. Katru scenāriju iespējams reāli iziet mobilajā telefonā, izmantojot QR kodus.<br />
+        Šis ir wireframe prototips testēšanai — tas nav savienots ar reālām ierīcēm vai Aranet Cloud.</p>
+    </div>
+
+    <a class="btn btn--primary btn--block" href="app/index.html">Sākt</a>
+
+    <!-- Scenario descriptions only — a reminder, not a menu: the app itself
+         offers all three methods on its „Add Mioty device/-s" screen, so one
+         Start is enough (user, 2026-09-10). -->
+    <section class="sc">
+      <div class="sc__head"><span class="sc__num">1</span><span class="sc__name">Man ir KIT</span></div>
+      <p class="sc__text">Gateway kopā ar iepriekš sagatavotu ierīču komplektu. Noskenējot vienu Kit QR kodu, visas komplektā
+        iekļautās ierīces tiek pievienotas vienlaikus. Kit kods: <span class="code">xw45-34df-343s-1234</span>.</p>
+    </section>
+
+    <section class="sc">
+      <div class="sc__head"><span class="sc__num">2</span><span class="sc__name">Skenēt QR kodus</span></div>
+      <p class="sc__text">Scenārijs ierīcēm, kurām nav kopēja Kit QR koda. Katras ierīces QR kods tiek skenēts atsevišķi, un
+        aplikācija automātiski uzskaita noskenētās ierīces. Ierīču kodi ir uz <a href="qr-sheet.html">QR kodu A4 lapas</a>.
+        Uzlīmju QR kodi nav gala kodi — tie ietver tikai konceptuālo jēgu (testa aizstājēji, ne īsto ierīču kodi).</p>
+    </section>
+
+    <section class="sc">
+      <div class="sc__head"><span class="sc__num">3</span><span class="sc__name">Augšupielādēt .csv failu</span></div>
+      <p class="sc__text">Scenārijs ar iepriekš sagatavotu ierīču sarakstu. Vispirms .csv fails tiek saglabāts telefonā un pēc
+        tam augšupielādēts aplikācijā. <a href="mioty-devices.csv" download>Lejupielādēt .csv failu</a></p>
+    </section>
+
+    <p class="foot">Visi trīs scenāriji noslēdzas ar Successfully connected ekrānu, no kura iespējams atgriezties sākuma lapā.</p>
+    <p class="foot">Datorā prototips tiek attēlots telefona rāmī, un kameras darbība tiek simulēta. Savukārt, atverot prototipu
+      telefonā caur HTTPS, iespējams izmantot telefona īsto kameru un iziet visu QR kodu skenēšanas plūsmu.</p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,153 @@
+/* shadcn/ui — base CSS variables (design system shared layer) */
+/* Mirror of saf-internal/shadcn lib/shadcn.css — keep in sync with the team repo. */
+@layer base {
+  :root {
+    --background: rgba(255, 255, 255, 1);
+    --foreground: rgba(2, 8, 23, 1);
+    --card: rgba(255, 255, 255, 1);
+    --card-foreground: rgba(2, 8, 23, 1);
+    --popover: rgba(255, 255, 255, 1);
+    --popover-foreground: rgba(2, 8, 23, 1);
+    --primary: rgba(15, 23, 42, 1);
+    --primary-foreground: rgba(248, 250, 252, 1);
+    --secondary: rgba(241, 245, 249, 1);
+    --secondary-foreground: rgba(15, 23, 42, 1);
+    --muted: rgba(241, 245, 249, 1);
+    --muted-foreground: rgba(100, 116, 139, 1);
+    --accent: rgba(241, 245, 249, 1);
+    --accent-foreground: rgba(15, 23, 42, 1);
+    --destructive: rgba(239, 68, 68, 1);
+    --destructive-foreground: rgba(248, 250, 252, 1);
+    --border: rgba(226, 232, 240, 1);
+    --input: rgba(226, 232, 240, 1);
+    --ring: rgba(2, 8, 23, 1);
+    --radius: 0.5rem;
+
+    /* ── Tailwind spacing scale ── */
+    --spacing-0: 0px;
+    --spacing-px: 1px;
+    --spacing-0\.5: 2px;
+    --spacing-1: 4px;
+    --spacing-1\.5: 6px;
+    --spacing-2: 8px;
+    --spacing-2\.5: 10px;
+    --spacing-3: 12px;
+    --spacing-3\.5: 14px;
+    --spacing-4: 16px;
+    --spacing-5: 20px;
+    --spacing-6: 24px;
+    --spacing-7: 28px;
+    --spacing-8: 32px;
+    --spacing-9: 36px;
+    --spacing-10: 40px;
+    --spacing-11: 44px;
+    --spacing-12: 48px;
+    --spacing-14: 56px;
+    --spacing-16: 64px;
+    --spacing-20: 80px;
+    --spacing-24: 96px;
+    --spacing-28: 112px;
+    --spacing-32: 128px;
+    --spacing-36: 144px;
+    --spacing-40: 160px;
+    --spacing-44: 176px;
+    --spacing-48: 192px;
+    --spacing-52: 208px;
+    --spacing-56: 224px;
+    --spacing-60: 240px;
+    --spacing-64: 256px;
+    --spacing-72: 288px;
+    --spacing-80: 320px;
+    --spacing-96: 384px;
+
+    /* ── Font size scale ── */
+    --text-2xs: 0.625rem; /* 10px — labels, captions */
+    --text-xs: 0.75rem; /* 12px — small UI text */
+    --text-sm: 0.875rem; /* 14px — body / default */
+    --text-base: 1rem; /* 16px — large body */
+    --text-lg: 1.0625rem; /* 17px — brand / heading */
+    --text-xl: 1.125rem; /* 18px */
+    --text-2xl: 1.25rem; /* 20px — card titles */
+    --text-3xl: 1.5rem; /* 24px — page titles */
+    --text-4xl: 1.875rem; /* 30px — hero */
+
+    /* ── Line heights ── */
+    --leading-none: 1;
+    --leading-tight: 1.25;
+    --leading-snug: 1.375;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.625;
+    --leading-loose: 2;
+
+    /* ── Letter spacing ── */
+    --tracking-tighter: -0.05em;
+    --tracking-tight: -0.025em;
+    --tracking-normal: 0em;
+    --tracking-wide: 0.025em;
+    --tracking-wider: 0.05em;
+    --tracking-widest: 0.1em;
+
+    /* ── Font weights ── */
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+
+    /* ── Semantic state colors ── */
+    /* success (green) */
+    --success: rgba(34, 197, 94, 1);
+    --success-fg: rgba(21, 128, 61, 1);
+    --success-muted: rgba(34, 197, 94, 0.1);
+    --success-border: rgba(34, 197, 94, 0.2);
+    /* warning (yellow) */
+    --warning: rgba(234, 179, 8, 1);
+    --warning-fg: rgba(161, 98, 7, 1);
+    --warning-muted: rgba(234, 179, 8, 0.1);
+    --warning-border: rgba(234, 179, 8, 0.25);
+    /* info (blue) */
+    --info: rgba(59, 130, 246, 1);
+    --info-fg: rgba(29, 78, 216, 1);
+    --info-muted: rgba(59, 130, 246, 0.08);
+    --info-border: rgba(59, 130, 246, 0.2);
+    /* purple */
+    --purple: rgba(139, 92, 246, 1);
+    --purple-fg: rgba(109, 40, 217, 1);
+    --purple-muted: rgba(139, 92, 246, 0.09);
+    --purple-border: rgba(139, 92, 246, 0.2);
+    /* orange */
+    --orange: rgba(249, 115, 22, 1);
+    --orange-fg: rgba(194, 65, 12, 1);
+    --orange-muted: rgba(249, 115, 22, 0.09);
+    --orange-border: rgba(249, 115, 22, 0.2);
+    /* teal */
+    --teal: rgba(20, 184, 166, 1);
+    --teal-fg: rgba(15, 118, 110, 1);
+    --teal-muted: rgba(20, 184, 166, 0.09);
+    --teal-border: rgba(20, 184, 166, 0.2);
+    /* neutral (slate for "discontinued" style badges) */
+    --neutral-muted: rgba(100, 116, 139, 0.1);
+    --neutral-border: rgba(100, 116, 139, 0.2);
+  }
+
+  .dark {
+    --background: rgba(2, 8, 23, 1);
+    --foreground: rgba(248, 250, 252, 1);
+    --card: rgba(2, 8, 23, 1);
+    --card-foreground: rgba(248, 250, 252, 1);
+    --popover: rgba(2, 8, 23, 1);
+    --popover-foreground: rgba(248, 250, 252, 1);
+    --primary: rgba(248, 250, 252, 1);
+    --primary-foreground: rgba(15, 23, 42, 1);
+    --secondary: rgba(30, 41, 59, 1);
+    --secondary-foreground: rgba(248, 250, 252, 1);
+    --muted: rgba(30, 41, 59, 1);
+    --muted-foreground: rgba(148, 163, 184, 1);
+    --accent: rgba(30, 41, 59, 1);
+    --accent-foreground: rgba(248, 250, 252, 1);
+    --destructive: rgba(127, 29, 29, 1);
+    --destructive-foreground: rgba(248, 250, 252, 1);
+    --border: rgba(30, 41, 59, 1);
+    --input: rgba(30, 41, 59, 1);
+    --ring: rgba(203, 213, 225, 1);
+  }
+}
