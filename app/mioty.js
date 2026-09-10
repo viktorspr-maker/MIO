@@ -204,7 +204,7 @@
       }
       if (navigator.vibrate) navigator.vibrate(kind === 'ok' ? 60 : kind === 'dup' ? [40, 80, 40] : [120]);
       clearTimeout(feedbackTimer);
-      feedbackTimer = setTimeout(() => { delete frame.dataset.state; if (toast) toast.hidden = true; }, kind === 'ok' ? 1100 : 1600);
+      feedbackTimer = setTimeout(() => { delete frame.dataset.state; if (toast) toast.hidden = true; }, kind === 'ok' ? 1000 : 1500);
     };
     const bump = () => { btn.classList.remove('btn--bump'); void btn.offsetWidth; btn.classList.add('btn--bump'); };
     const add = (code) => {
@@ -244,14 +244,24 @@
       navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
         .then((s) => {
           stream = s; video.srcObject = s; video.hidden = false; cam.classList.add('cam--live');
+          setupTrack(s.getVideoTracks()[0]);
           return video.play();
         })
         .then(() => { status.textContent = detector ? 'Camera on. Hold a device QR in the frame.' : 'Camera on. Hold a device QR in the frame, close enough to fill it.'; requestAnimationFrame(tick); })
         .catch((err) => {
-          cam.classList.remove('cam--live'); video.hidden = true; camBtn.hidden = false;
-          status.textContent = (err && err.name === 'NotAllowedError')
-            ? 'Camera permission denied — allow it in the browser settings, or tap the frame to fake a scan.'
-            : 'Could not start the camera — tap “Turn on camera” to retry, or tap the frame to fake a scan.';
+          cam.classList.remove('cam--live'); video.hidden = true;
+          const denied = err && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.name === 'SecurityError');
+          if (denied) {
+            /* „Don't allow" → a scanner is pointless; back to the method choice
+               with a note (user, 2026-09-10: „ja dont allow … jāmet uz
+               izvēlieties QR ko?"). */
+            status.textContent = 'Camera not allowed — going back to the other ways to add devices.';
+            feedback('bad', 'Camera not allowed');
+            setTimeout(() => go('add.html?camera=denied'), 1300);
+            return;
+          }
+          camBtn.hidden = false;
+          status.textContent = 'Could not start the camera — tap “Turn on camera” to retry, or tap the frame to fake a scan.';
         });
     }
     /* Reading the frames. Two engines:
@@ -264,8 +274,28 @@
            jsQR cannot read. The crop keeps ~5px per module and is cheaper too. */
     let detector = null;
     try { if ('BarcodeDetector' in window) detector = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (_) { detector = null; }
+    /* Camera track extras — only where the browser reports them (Android
+       Chrome, iOS 17+): continuous autofocus, and optical/digital zoom via a
+       1×/2×/3× button and a two-finger pinch on the frame. */
+    let zoomBtn = null;
+    function setupTrack(track) {
+      if (!track || !track.getCapabilities) return;
+      let caps = {}; try { caps = track.getCapabilities() || {}; } catch (_) {}
+      if (Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
+      if (!caps.zoom || !(caps.zoom.max > caps.zoom.min)) return;
+      const zmin = Math.max(1, caps.zoom.min), zmax = Math.min(caps.zoom.max, 5);
+      let z = zmin;
+      const apply = (v) => { z = Math.min(zmax, Math.max(zmin, v)); track.applyConstraints({ advanced: [{ zoom: z }] }).catch(() => {}); if (zoomBtn) zoomBtn.textContent = (Math.round(z * 10) / 10) + '×'; };
+      zoomBtn = document.createElement('button'); zoomBtn.type = 'button'; zoomBtn.className = 'cam__zoom'; zoomBtn.setAttribute('aria-label', 'Camera zoom'); zoomBtn.dataset.tooltip = 'Camera zoom';
+      cam.appendChild(zoomBtn); apply(zmin);
+      zoomBtn.addEventListener('click', () => apply(z + 1 > zmax ? zmin : Math.floor(z) + 1));
+      let pinch = null;
+      frame.addEventListener('touchstart', (e) => { if (e.touches.length === 2) pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z }; }, { passive: true });
+      frame.addEventListener('touchmove', (e) => { if (pinch && e.touches.length === 2) { const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); apply(pinch.z * d / pinch.d); } }, { passive: true });
+      frame.addEventListener('touchend', () => { pinch = null; }, { passive: true });
+    }
     const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d', { willReadFrequently: true });
-    let last = '', lastAt = 0, busy = false;
+    let last = '', lastAt = 0, lastKind = '', busy = false, frameNo = 0;
     /* The region of the video that the on-screen frame shows. The <video> is
        object-fit: cover, so first work out which part of the native frame is
        visible, then take the frame's share of it. Decoding only that region at
@@ -285,13 +315,32 @@
       return { sx, sy, sw: Math.min(vw - sx, fw + 2 * p), sh: Math.min(vh - sy, fh + 2 * p) };
     }
     function grabFrame() {
-      const r = region(0.15);
-      const out = Math.min(Math.round(Math.max(r.sw, r.sh)), 560);      /* enough pixels, cheap enough for 30fps on a phone */
+      const r = region(0.35);                                            /* slack: a code held a bit too close still fits */
+      const out = Math.min(Math.round(Math.max(r.sw, r.sh)), 640);
       canvas.width = Math.round(out * r.sw / Math.max(r.sw, r.sh)); canvas.height = Math.round(out * r.sh / Math.max(r.sw, r.sh));
       ctx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, canvas.width, canvas.height);
       return ctx.getImageData(0, 0, canvas.width, canvas.height);
     }
-    /* Only the code the user is aiming at: its centre in the middle 60% of the
+    /* Fallback on alternate frames: the whole visible picture, downscaled —
+       finds a code that is smaller or a little off-centre (user, 2026-09-10:
+       „jūtīgāku pret zoom"). A hit still has to sit near the frame. */
+    function grabVisible() {
+      const vw = video.videoWidth, vh = video.videoHeight, ew = video.clientWidth || 1, eh = video.clientHeight || 1;
+      const scale = Math.max(ew / vw, eh / vh), visW = ew / scale, visH = eh / scale;
+      const sx = (vw - visW) / 2, sy = (vh - visH) / 2;
+      const out = 640 / Math.max(visW, visH);
+      canvas.width = Math.round(visW * out); canvas.height = Math.round(visH * out);
+      ctx.drawImage(video, sx, sy, visW, visH, 0, 0, canvas.width, canvas.height);
+      return { img: ctx.getImageData(0, 0, canvas.width, canvas.height), toNative: (x, y) => ({ x: sx + x / out, y: sy + y / out }) };
+    }
+    function nearFrame(loc, toNative) {
+      if (!loc) return true;
+      const pts = [loc.topLeftCorner, loc.topRightCorner, loc.bottomLeftCorner, loc.bottomRightCorner].map((q) => toNative(q.x, q.y));
+      const cx = pts.reduce((a, q) => a + q.x, 0) / 4, cy = pts.reduce((a, q) => a + q.y, 0) / 4;
+      const r = region(0.4);
+      return cx > r.sx && cx < r.sx + r.sw && cy > r.sy && cy < r.sy + r.sh;
+    }
+    /* Only the code the user is aiming at: its centre in the middle 70% of the
        crop and its size at least 30% of it. Neighbouring stickers at the edge of
        the picture are ignored instead of being „read by accident". */
     function aimed(loc, w, h) {
@@ -300,7 +349,7 @@
       const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y);
       const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
       const size = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
-      return cx > w * 0.2 && cx < w * 0.8 && cy > h * 0.2 && cy < h * 0.8 && size >= Math.min(w, h) * 0.3;
+      return cx > w * 0.15 && cx < w * 0.85 && cy > h * 0.15 && cy < h * 0.85 && size >= Math.min(w, h) * 0.18;
     }
     function aimedBox(box) {
       const r = region(0), cx = box.x + box.width / 2, cy = box.y + box.height / 2;
@@ -316,9 +365,15 @@
             .catch(() => { detector = null; })          /* engine broke — fall back to jsQR */
             .finally(() => { busy = false; });
         } else {
+          frameNo += 1;
           const img = grabFrame();
           const hit = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
           if (hit && hit.data && aimed(hit.location, img.width, img.height)) decode(hit.data);
+          else if (frameNo % 2 === 0) {                                   /* every other frame: the whole view */
+            const g = grabVisible();
+            const h2 = window.jsQR(g.img.data, g.img.width, g.img.height, { inversionAttempts: 'dontInvert' });
+            if (h2 && h2.data && nearFrame(h2.location, g.toNative)) decode(h2.data);
+          }
         }
       }
       if (detector) setTimeout(() => requestAnimationFrame(tick), 100); else requestAnimationFrame(tick);
@@ -327,8 +382,16 @@
     function decode(text) {
       const code = codeFrom(text), now = Date.now();
       if (!code) { status.textContent = whatIsIt(text); feedback('bad', 'Not a device code'); return false; }
-      if (code === last && now - lastAt < 1500) { lastAt = now; return false; }   /* same sticker still in view — quiet */
-      last = code; lastAt = now; add(code);
+      /* Quiet window for the SAME sticker: as long as the green ✓ is showing
+         (1 s) after a read; 2.5 s between repeats of „already scanned" while it
+         is held. The window is not refreshed by seeing the code again, so the
+         duplicate note follows the read as soon as the ✓ fades, and a code you
+         come back to after another one is flagged at once
+         (user, 2026-09-10: „lai parādās ātrāk"). */
+      const quiet = lastKind === 'dup' ? 2500 : 1000;
+      if (code === last && now - lastAt < quiet) return false;
+      last = code; lastAt = now; lastKind = found.includes(code) ? 'dup' : 'ok';
+      add(code);
       return true;
     }
     window.Mioty.decode = decode;
@@ -346,7 +409,7 @@
     if (window.ResizeObserver && foot) new ResizeObserver(fit).observe(foot);
     camBtn.addEventListener('click', startCamera);
     window.addEventListener('pagehide', () => { if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; });
-    if (canScan) startCamera();
+    if (canScan && !/[?&]nocam/.test(location.search)) startCamera();   /* ?nocam=1: desktop checks without the camera */
     else if (video) status.textContent = (location.protocol === 'https:' || location.hostname === 'localhost')
       ? 'No in-app scanner here — tap the frame to fake a scan.'
       : 'Camera needs HTTPS — open the GitHub Pages link on the phone.';

@@ -27,6 +27,7 @@
               <span class="ph"></span>
               <h1 class="h1">Add Mioty device/-s</h1>
               <p class="lead">Pick how to register the devices in <strong id="wsName"></strong>. All three end with the same list.</p>
+              <p class="hint" id="camHint" hidden>Camera access was denied, so QR scanning is off on this phone. Use a kit code or a .csv file — or allow the camera for this site in the browser settings and try “Scan QR code” again.</p>
               <div class="stack">
                 <a class="btn btn--outline btn--block" href="kit.html">I have a KIT</a>
                 <a class="btn btn--outline btn--block" href="scan.html">Scan QR code</a>
@@ -46,6 +47,8 @@
 <script src="mioty.js"></script>
 <script>
   AppShell.mount({ app: 'mioty', title: '', back: "workspace.html", backLabel: 'Back', tabs: [] });
-  document.getElementById('wsName').textContent = Mioty.state.workspace;</script>
+  document.getElementById('wsName').textContent = Mioty.state.workspace;
+  /* Sent back here by the scanner after „Don't allow" */
+  if (/[?&]camera=denied/.test(location.search)) { document.getElementById('camHint').hidden = false; history.replaceState(null, '', 'add.html'); }</script>
 </body>
 </html>
